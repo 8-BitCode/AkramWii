@@ -1,6 +1,6 @@
 /* WarningScreen.jsx */
 import React from "react";
-import "./WarningScreen.css";
+import "./Warningscreen.css";
 
 export default function WarningScreen() {
   return (
