@@ -1,7 +1,7 @@
 /* App.jsx */
 import React from "react";
 import "./App.css";
-import DiscChannel from "./DiscChannel";
+import DiscChannel from "./Discchannel";
 
 export default () => {
   const [now, setNow] = React.useState(new Date());
