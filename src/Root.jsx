@@ -1,6 +1,6 @@
 /* Root.jsx */
 import React from "react";
-import WarningScreen from "./WarningScreen";
+import WarningScreen from "./Warningscreen";
 import App from "./App";
 import "./Root.css";
 
