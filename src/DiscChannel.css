@@ -1,0 +1,203 @@
+/* DiscChannel.css */
+
+.disc-channel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: #000;
+  opacity: 0;
+  transition: opacity 620ms ease;
+  will-change: opacity;
+}
+.disc-channel-frame {
+  position: fixed;
+  top: 4vh;
+  bottom: 4vh;
+  left: 4vw;
+  right: 4vw;
+  z-index: 40;
+  border-radius: 30px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(120, 130, 140, 0.05) 0px,
+      rgba(120, 130, 140, 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(160deg, #ffffff 0%, #eef0f2 55%, #dfe1e4 100%);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.disc-channel-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+.disc-channel-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.14) 100%);
+}
+
+.disc-channel-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(56px, 13%, 100px);
+}
+
+.disc-channel-swoosh {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.disc-channel-title {
+  position: absolute;
+  top: 50%;
+  right: clamp(18px, 3vw, 34px);
+  transform: translateY(-46%);
+  color: #ffffff;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(14px, 2vw, 19px);
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.disc-channel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(30px, 3.6vw, 48px);
+  height: clamp(30px, 3.6vw, 48px);
+  background: transparent;
+  border: none;
+  padding: 0;
+  appearance: none;
+  color: #7fd8ea;
+  opacity: 0.85;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.disc-channel-arrow svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+
+.disc-channel-arrow:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.disc-channel-arrow--left {
+  left: clamp(8px, 2vw, 22px);
+}
+
+.disc-channel-arrow--right {
+  right: clamp(8px, 2vw, 22px);
+}
+
+.disc-channel-body {
+  position: absolute;
+  top: 16%;
+  bottom: 22%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 4vh, 46px);
+}
+
+.disc-channel-slot {
+  width: 58%;
+  max-width: 420px;
+  height: clamp(90px, 20vh, 220px);
+}
+
+.disc-channel-message {
+  margin: 0;
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  color: #6f7175;
+  font-size: clamp(17px, 2.8vw, 28px);
+  letter-spacing: 0.3px;
+}
+
+.disc-channel-bottombar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(64px, 13%, 104px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 3vw, 36px);
+  padding: 0 6%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.08));
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.disc-channel-btn {
+  flex: 1;
+  max-width: 300px;
+  height: clamp(46px, 7.5vh, 66px);
+  border-radius: 999px;
+  border: none;
+  appearance: none;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(14px, 2.2vw, 20px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.disc-channel-btn--menu {
+  background: #ffffff;
+  color: #3a3b3f;
+  box-shadow: 0 0 0 3px #35c3db, 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.disc-channel-btn--menu:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px #35c3db, 0 6px 14px rgba(0, 0, 0, 0.24);
+}
+
+.disc-channel-btn--start {
+  background: #e4e5e8;
+  color: #b7b8bc;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 600px) {
+  .disc-channel-frame {
+    top: 3vh;
+    bottom: 3vh;
+    left: 3vw;
+    right: 3vw;
+    border-radius: 20px;
+  }
+  .disc-channel-bottombar {
+    flex-direction: row;
+    gap: 10px;
+    padding: 0 4%;
+  }
+}

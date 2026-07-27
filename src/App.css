@@ -1,0 +1,438 @@
+/* App.css */
+@font-face {
+  font-family: 'WiiBold';
+  src: url('./Fonts/WiiBold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'WiiMedium';
+  src: url('./Fonts/WiiMedium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'WiiLight';
+  src: url('./Fonts/WiiLight.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Segment';
+  src: url('./Fonts/Segment.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'WiiMedium', 'Segoe UI', sans-serif;
+  background: #eef0f2;
+}
+
+.wii-screen {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(120, 130, 140, 0.05) 0px,
+      rgba(120, 130, 140, 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at 50% 8%, #ffffff 0%, #ffffff 18%, #eef0f2 55%, #e2e5e8 100%);
+  background-color: #eef0f2;
+}
+
+/* Custom cursor - bigger */
+.custom-cursor {
+  position: fixed;
+  pointer-events: none !important; /* Critical - ensures cursor doesn't block clicks */
+  z-index: 9999;
+  width: 48px;
+  height: 48px;
+  background: url('./Cursor/Cursor.png') center/contain no-repeat;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transition: none;
+  filter: drop-shadow(0 0 5px rgba(53, 195, 219, 0.2));
+  display: none;
+  will-change: transform;
+  -moz-transform: translate(-50%, -50%) rotate(0deg);
+  -webkit-transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.custom-cursor.visible {
+  display: block;
+}
+
+.custom-cursor.rotating {
+  filter: drop-shadow(0 0 20px rgba(53, 195, 219, 0.8));
+}
+
+/* Hide default cursor everywhere */
+* {
+  cursor: none !important;
+}
+
+/* On touch devices there's no real mouse to track, so the custom cursor
+   image (positioned via mousemove) can get stuck on screen. Fall back to
+   the native pointer instead. */
+@media (hover: none) and (pointer: coarse) {
+  .custom-cursor {
+    display: none !important;
+  }
+  * {
+    cursor: auto !important;
+  }
+}
+
+/* ---------- Channel tile grid ---------- */
+
+.wii-grid {
+  position: absolute;
+  top: 3%;
+  left: 3%;
+  right: 3%;
+  bottom: 38%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: clamp(8px, 1.8vmin, 24px);
+}
+
+/* Mobile-first: base rules below are the 2x2 layout used on all phone
+   and small-tablet widths, then min-width: 601px enhances up to the
+   full 4x3 grid. Using only a min-width breakpoint (instead of mixing
+   max-width + min-width) avoids two queries being true at once and
+   silently overriding each other. */
+
+.wii-grid {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: clamp(16px, 3.5vmin, 40px);
+  top: 5%;
+  left: 5%;
+  right: 5%;
+  bottom: 38%;
+}
+
+.wii-tile:nth-child(n+5) {
+  display: none;
+}
+
+.wii-tile {
+  aspect-ratio: 1 / 1.5;
+  max-height: 100%;
+  max-width: 100%;
+  min-height: 0;
+  min-width: 0;
+  border-radius: 10% / 14%;
+}
+
+.wii-tile::before {
+  border-radius: 10% / 14%;
+}
+
+.wii-tile .tile-gloss {
+  border-radius: 10% / 14%;
+}
+
+@media (min-width: 601px) {
+  .wii-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: clamp(8px, 1.8vmin, 24px);
+    top: 3%;
+    left: 3%;
+    right: 3%;
+    bottom: 38%;
+  }
+  .wii-tile:nth-child(n+5) {
+    display: flex;
+  }
+  .wii-tile {
+    aspect-ratio: auto;
+    max-height: none;
+    max-width: none;
+    min-height: unset;
+    min-width: unset;
+    border-radius: 5% / 10%;
+  }
+  .wii-tile::before {
+    border-radius: 12% / 16%;
+  }
+  .wii-tile .tile-gloss {
+    border-radius: 12% / 16%;
+  }
+}
+
+.wii-tile {
+  position: relative;
+  border-radius: 5% / 10%;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(120, 130, 140, 0.06) 0px,
+      rgba(120, 130, 140, 0.06) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(155deg, #f4f4f6 0%, #e2e3e6 45%, #cfd0d4 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 2px 3px rgba(255, 255, 255, 0.85),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.12),
+    0 3px 6px rgba(0, 0, 0, 0.22),
+    0 0 0 2.5px rgba(150, 155, 165, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: none;
+  padding: 0;
+  appearance: none;
+  transform: perspective(800px) rotateX(1deg) rotateY(0.5deg);
+  border-radius: 12% / 16%;
+  min-height: 11em;
+  height: 100%;
+}
+
+.wii-tile:hover {
+  transform: perspective(800px) rotateX(1deg) rotateY(0.5deg) translateY(-2px) scale(1.015);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 2px 3px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.12),
+    0 6px 12px rgba(0, 0, 0, 0.28),
+    0 0 0 2.5px rgba(130, 135, 145, 0.7);
+}
+
+.wii-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12% / 16%;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.15) 100%);
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: multiply;
+}
+
+.wii-tile .tile-watermark {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='72'><text x='4' y='48' font-family='Arial,Helvetica,sans-serif' font-weight='700' font-size='30' fill='rgba(255,255,255,0.55)' transform='rotate(-16 75 36)'>Wii</text></svg>");
+  background-repeat: repeat;
+  background-size: clamp(40px, 6vmin, 150px) clamp(20px, 3vmin, 72px);
+  mix-blend-mode: overlay;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wii-tile .tile-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: 12% / 16%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.15) 18%,
+    transparent 45%
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+.bar-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36%;
+  min-height: clamp(110px, 22vh, 220px);
+  max-height: 320px;
+}
+
+.bar-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bar-svg .bar-path-shadow {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+
+.bar-content {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wii-orb {
+  position: absolute;
+  width: clamp(10px, 13vmin, 160px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  bottom: 0%;
+  border: none;
+  padding: 0;
+  pointer-events: auto;
+  background: radial-gradient(circle at 35% 28%, #ffffff 0%, #dcdee2 55%, #b7bac1 100%);
+  box-shadow:
+    0 0 0 5px #35c3db,
+    inset 0 2px 6px rgba(255, 255, 255, 0.9),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.15),
+    0 12px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.wii-orb:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.wii-orb:active {
+  transform: translate(-50%, -50%) scale(0.96);
+}
+
+.wii-orb--left {
+  left: 10%;
+  transform: translate(-50%, -50%);
+}
+
+.wii-orb--right {
+  left: 90%;
+  transform: translate(-50%, -50%);
+}
+
+.wii-orb-label {
+  font-family: 'WiiBold', 'Segoe UI', sans-serif;
+  font-size: clamp(16px, 4.5vmin, 42px);
+  font-weight: 700;
+  color: #4c4d51;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.mail-icon {
+  width: 42%;
+  height: 42%;
+  stroke: #5c5d61;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));
+}
+
+.clock-time {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  font-family: 'Segment';
+  font-size: clamp(30px, 8vmin, 76px);
+  font-weight: 700;
+  letter-spacing: clamp(4px, 2.2vmin, 20px);
+  color: #7b7c83;
+  max-width: 92%;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.clock-date {
+  position: absolute;
+  left: 50%;
+  top: 75%;
+  transform: translate(-50%, -50%);
+  font-family: 'WiiMedium', 'Segoe UI', sans-serif;
+  font-size: clamp(16px, 3.4vmin, 28px);
+  color: #4f5054;
+  letter-spacing: clamp(0.5px, 0.15vmin, 1px);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .wii-orb--left {
+    left: 10%;
+  }
+  .wii-orb--right {
+    left: 90%;
+  }
+  .clock-date {
+    top: 78%;
+  }
+  .wii-grid {
+    gap: clamp(12px, 2.5vmin, 30px);
+  }
+}
+
+@media (max-height: 500px) {
+  .bar-wrap {
+    height: 55%;
+    min-height: 100px;
+  }
+  .wii-orb {
+    width: clamp(56px, 11vmin, 120px);
+  }
+  .clock-time {
+    top: 42%;
+  }
+  .clock-date {
+    top: 70%;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .wii-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: clamp(3px, 0.8vmin, 10px);
+    bottom: 45%;
+    top: 3%;
+  }
+  .wii-tile:nth-child(n+5) {
+    display: flex;
+  }
+  .wii-tile {
+    aspect-ratio: auto;
+    max-height: none;
+    max-width: none;
+    min-height: unset;
+    min-width: unset;
+    border-radius: 5% / 10%;
+  }
+  .wii-tile::before {
+    border-radius: 12% / 16%;
+  }
+  .wii-tile .tile-gloss {
+    border-radius: 12% / 16%;
+  }
+  .bar-wrap {
+    height: 45%;
+    min-height: 80px;
+  }
+}
