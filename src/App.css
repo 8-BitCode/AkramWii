@@ -113,7 +113,7 @@ body {
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: clamp(10px, 2vmin, 20px);
-    top: 3%;
+    top: 6%;
     left: 4%;
     right: 4%;
     bottom: 38%;
@@ -241,12 +241,13 @@ body {
     top: 3%;
     left: 3%;
     right: 3%;
-    bottom: 38%;
+    bottom: 33%;
     transform: none;
     width: auto;
     height: auto;
     max-width: none;
     max-height: none;
+
   }
   .wii-tile {
     aspect-ratio: auto;
