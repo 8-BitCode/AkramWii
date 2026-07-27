@@ -44,7 +44,8 @@ export default function Root() {
 
     if (mainLayerRef.current) {
       const radius = p * 165;
-      const brightness = lerp(0.32, 1, Math.min(1, p * 1.35));
+      // Smoother brightness curve - starts darker and reaches full brightness later
+      const brightness = lerp(0.25, 1, Math.min(1, Math.pow(p, 1.4) * 1.5));
       const scale = lerp(1.09, 1, p);
       mainLayerRef.current.style.clipPath = `circle(${radius}% at ${originX}% ${originY}%)`;
       mainLayerRef.current.style.filter = `brightness(${brightness})`;
@@ -52,7 +53,7 @@ export default function Root() {
     }
 
     if (warningRef.current) {
-      const opacity = clamp(1 - p * 1.35, 0, 1);
+      const opacity = clamp(1 - p * 1.3, 0, 1);
       const blur = p * 16;
       const scale = 1 + p * 0.22;
       const translate = -p * 46;
@@ -65,20 +66,20 @@ export default function Root() {
       const size = p * 260;
       ring1Ref.current.style.width = `${size}vmax`;
       ring1Ref.current.style.height = `${size}vmax`;
-      ring1Ref.current.style.opacity = p < 0.04 ? "0" : String(clamp(1 - Math.max(0, p - 0.75) / 0.25, 0, 1));
+      ring1Ref.current.style.opacity = p < 0.04 ? "0" : String(clamp(1 - Math.max(0, p - 0.75) / 0.25, 0, 1) * 0.7);
     }
     if (ring2Ref.current) {
       const local = clamp((p - 0.08) / 0.92, 0, 1);
       const size = local * 260;
       ring2Ref.current.style.width = `${size}vmax`;
       ring2Ref.current.style.height = `${size}vmax`;
-      ring2Ref.current.style.opacity = local < 0.04 ? "0" : String(clamp(1 - Math.max(0, local - 0.7) / 0.3, 0, 1));
+      ring2Ref.current.style.opacity = local < 0.04 ? "0" : String(clamp(1 - Math.max(0, local - 0.7) / 0.3, 0, 1) * 0.5);
     }
 
     if (discRef.current) {
       const rotate = p * 900;
       const scale = clamp(1 - p * 0.55, 0.2, 1);
-      const opacity = p < 0.02 ? 0 : clamp(1 - Math.max(0, p - 0.55) / 0.35, 0, 1);
+      const opacity = p < 0.02 ? 0 : clamp(1 - Math.max(0, p - 0.55) / 0.35, 0, 1) * 0.8;
       discRef.current.style.transform = `translate(-50%, -50%) rotate(${rotate}deg) scale(${scale})`;
       discRef.current.style.opacity = String(opacity);
     }
@@ -92,13 +93,21 @@ export default function Root() {
       const rad = (s.angle * Math.PI) / 180;
       const x = Math.cos(rad) * dist;
       const y = Math.sin(rad) * dist;
-      const opacity = clamp(local * 6, 0, 1) * clamp(1 - Math.max(0, local - 0.65) / 0.35, 0, 1);
+      const opacity = clamp(local * 6, 0, 1) * clamp(1 - Math.max(0, local - 0.65) / 0.35, 0, 1) * 0.7;
       el.style.transform = `translate(-50%, -50%) translate(${x}vmax, ${y}vmax) rotate(${rot}deg)`;
       el.style.opacity = String(opacity);
     });
 
     if (flashRef.current) {
-      const flashOpacity = clamp((p - 0.9) / 0.1, 0, 1) * 0.85;
+      // Reduced flash intensity - lower peak and shorter duration
+      const flashPeak = 0.35;
+      const flashStart = 0.82;
+      const flashEnd = 0.98;
+      let flashOpacity = 0;
+      if (p > flashStart && p < flashEnd) {
+        const flashProgress = (p - flashStart) / (flashEnd - flashStart);
+        flashOpacity = Math.sin(flashProgress * Math.PI) * flashPeak;
+      }
       flashRef.current.style.opacity = String(flashOpacity);
     }
   }, []);
