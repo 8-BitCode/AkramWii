@@ -2,8 +2,8 @@
 import React from "react";
 import "./App.css";
 import DiscChannel from "./Discchannel";
-import MailPopup from "./MailPopup";
-import SettingsPanel from "./SettingsPanel";
+import MailPopup from "./Mailpopup";
+import SettingsPanel from "./Settingspanel";
 
 const DEFAULT_SETTINGS = {
   musicOn: true,
