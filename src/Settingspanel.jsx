@@ -1,7 +1,7 @@
 /* SettingsPanel.jsx */
 import React from "react";
-import "./MailPopup.css";
-import "./SettingsPanel.css";
+import "./Mailpopup.css";
+import "./Settingspanel.css";
 
 const DURATION = 560;
 const EASE = "cubic-bezier(0.22, 1.12, 0.3, 1)";
