@@ -1,0 +1,309 @@
+/* SettingsPanel.css */
+
+.settings-ring {
+  z-index: 48;
+}
+
+.settings-frame {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  width: min(560px, 88vw);
+  max-height: 82vh;
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  background: #eef0f2;
+}
+
+.settings-reset {
+  position: absolute;
+  top: -22px;
+  left: -22px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  appearance: none;
+  padding: 0;
+  z-index: 3;
+  background: radial-gradient(circle at 35% 28%, #ffffff 0%, #dcdee2 55%, #b7bac1 100%);
+  box-shadow:
+    0 0 0 4px #35c3db,
+    inset 0 2px 5px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.15),
+    0 8px 18px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+  cursor: none !important;
+}
+
+.settings-reset:hover {
+  transform: scale(1.06);
+  cursor: none !important;
+}
+
+.settings-reset.spinning svg {
+  animation: settings-reset-spin 500ms ease;
+}
+
+@keyframes settings-reset-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.settings-reset svg {
+  width: 46%;
+  height: 46%;
+  fill: none;
+  stroke: #5c5d61;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.settings-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 15%;
+  min-height: 52px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, #6fdcef 0%, #35c3db 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-title {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(18px, 3vw, 26px);
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.settings-body {
+  position: relative;
+  margin-top: 15%;
+  margin-bottom: 16%;
+  padding: clamp(14px, 2.6vh, 26px) clamp(22px, 5vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.8vh, 16px);
+  max-height: 51vh;
+  overflow-y: auto;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(12px, 3vw, 24px);
+  min-height: 40px;
+}
+
+.settings-row.disabled {
+  opacity: 0.45;
+}
+
+.settings-label {
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(13px, 2vw, 16px);
+  color: #4c4d51;
+  flex: 1 1 auto;
+}
+
+/* Toggle switch */
+.settings-toggle {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  appearance: none;
+  padding: 0;
+  flex-shrink: 0;
+  background: #d5d7db;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+  cursor: none !important;
+}
+
+.settings-toggle.on {
+  background: #35c3db;
+}
+
+.settings-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.settings-toggle.on .settings-toggle-knob {
+  transform: translateX(24px);
+}
+
+/* Slider */
+.settings-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  max-width: 62%;
+}
+
+.settings-slider {
+  flex: 1 1 auto;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: #d5d7db;
+  outline: none;
+  cursor: none !important;
+}
+
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #35c3db, 0 2px 5px rgba(0, 0, 0, 0.25);
+  cursor: none !important;
+}
+
+.settings-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #35c3db, 0 2px 5px rgba(0, 0, 0, 0.25);
+  cursor: none !important;
+}
+
+.settings-slider::-ms-thumb {
+  cursor: none !important;
+}
+
+.settings-slider::-webkit-slider-runnable-track {
+  cursor: none !important;
+}
+
+.settings-slider::-moz-range-track {
+  cursor: none !important;
+}
+
+.settings-slider:disabled {
+  opacity: 0.5;
+  cursor: none !important;
+}
+
+.settings-slider:disabled::-webkit-slider-thumb {
+  cursor: none !important;
+}
+
+.settings-slider:disabled::-moz-range-thumb {
+  cursor: none !important;
+}
+
+.settings-slider-value {
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 1.7vw, 14px);
+  color: #7b7c83;
+  width: 2.4em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Segmented control */
+.settings-segmented {
+  display: flex;
+  border-radius: 999px;
+  background: #d5d7db;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.settings-segment {
+  border: none;
+  appearance: none;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 1.7vw, 14px);
+  color: #6f7175;
+  background: transparent;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  cursor: none !important;
+}
+
+.settings-segment.active {
+  background: #ffffff;
+  color: #3a3b3f;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.settings-segment:hover {
+  cursor: none !important;
+}
+
+.settings-bottombar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16%;
+  min-height: 58px;
+  border-radius: 0 0 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(10px, 2vw, 24px);
+  padding: 0 clamp(16px, 3vw, 30px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.06));
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.settings-bottombar-spacer {
+  min-width: clamp(80px, 15vw, 128px);
+}
+
+.mail-popup-btn {
+  cursor: none !important;
+}
+
+.mail-popup-btn:hover {
+  cursor: none !important;
+}
+
+@media (max-width: 480px) {
+  .settings-frame {
+    width: 92vw;
+  }
+  .settings-reset {
+    width: 46px;
+    height: 46px;
+    top: -18px;
+    left: -14px;
+  }
+  .settings-slider-wrap {
+    max-width: 52%;
+  }
+}

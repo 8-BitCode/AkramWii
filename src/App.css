@@ -33,6 +33,37 @@
 
 * {
   box-sizing: border-box;
+  /* Hide default cursor everywhere */
+  cursor: none !important;
+}
+
+/* Also hide cursor on all interactive elements */
+button, a, input, select, textarea, [role="button"], [role="switch"] {
+  cursor: none !important;
+}
+
+/* Specifically target range inputs (sliders) and their thumbs */
+input[type="range"],
+input[type="range"]::-webkit-slider-thumb,
+input[type="range"]::-moz-range-thumb,
+input[type="range"]::-ms-thumb {
+  cursor: none !important;
+}
+
+/* Ensure cursor stays hidden on hover states */
+.wii-tile:hover,
+.wii-orb:hover,
+.disc-channel-arrow:hover,
+.disc-channel-btn:hover,
+.mail-popup-btn:hover,
+.settings-toggle:hover,
+.settings-segment:hover,
+.settings-reset:hover,
+.mail-popup-trash:hover,
+input[type="range"]:hover,
+input[type="range"]::-webkit-slider-thumb:hover,
+input[type="range"]::-moz-range-thumb:hover {
+  cursor: none !important;
 }
 
 html, body, #root {
@@ -88,9 +119,8 @@ body {
   filter: drop-shadow(0 0 20px rgba(53, 195, 219, 0.8));
 }
 
-/* Hide default cursor everywhere */
-* {
-  cursor: none !important;
+.custom-cursor.grabbing {
+  background-image: url('./Cursor/CursorGrab.png');
 }
 
 /* ---------- Channel tile grid ---------- */
@@ -173,8 +203,6 @@ body {
     display: none;
   }
 }
-
-/* REMOVED: The @media (max-width: 400px) rule that was forcing 1x1 */
 
 /* Very small phones - keep 2x2 but make tiles smaller */
 @media (max-width: 360px) and (orientation: portrait) {
@@ -321,13 +349,20 @@ body {
 .wii-tile .tile-watermark {
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='72'><text x='4' y='48' font-family='Arial,Helvetica,sans-serif' font-weight='700' font-size='30' fill='rgba(255,255,255,0.55)' transform='rotate(-16 75 36)'>Wii</text></svg>");
-  background-repeat: repeat;
-  background-size: clamp(40px, 6vmin, 150px) clamp(20px, 3vmin, 72px);
-  mix-blend-mode: overlay;
-  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'WiiBold', 'Segoe UI', sans-serif;
+  font-size: clamp(28px, 5vmin, 60px);
+  font-weight: 700;
+  color: rgba(80, 85, 95, 0.2);
+  text-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 20px rgba(255, 255, 255, 0.1);
   pointer-events: none;
   z-index: 1;
+  letter-spacing: 3px;
+  user-select: none;
 }
 
 .wii-tile .tile-gloss {
@@ -427,6 +462,13 @@ body {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));
+}
+
+.settings-cog-icon {
+  width: 46%;
+  height: 46%;
+  fill: #5c5d61;
   filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));
 }
 

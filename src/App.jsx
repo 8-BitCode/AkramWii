@@ -2,6 +2,17 @@
 import React from "react";
 import "./App.css";
 import DiscChannel from "./Discchannel";
+import MailPopup from "./MailPopup";
+import SettingsPanel from "./SettingsPanel";
+
+const DEFAULT_SETTINGS = {
+  musicOn: true,
+  musicVolume: 70,
+  sfxOn: true,
+  sfxVolume: 80,
+  brightness: 100,
+  clockFormat: "24",
+};
 
 export default () => {
   const [now, setNow] = React.useState(new Date());
@@ -12,6 +23,13 @@ export default () => {
   const [channelClosing, setChannelClosing] = React.useState(false);
   const [originRect, setOriginRect] = React.useState(null);
   const [tilesEnabled, setTilesEnabled] = React.useState(true);
+  const [mailOpen, setMailOpen] = React.useState(false);
+  const [mailClosing, setMailClosing] = React.useState(false);
+  const [mailOriginRect, setMailOriginRect] = React.useState(null);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [settingsClosing, setSettingsClosing] = React.useState(false);
+  const [settingsOriginRect, setSettingsOriginRect] = React.useState(null);
+  const [settings, setSettings] = React.useState(DEFAULT_SETTINGS);
   const cursorRef = React.useRef(null);
   const shiftPressedRef = React.useRef(false);
   const tileRefs = React.useRef([]);
@@ -29,15 +47,46 @@ export default () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Track mouse position for custom cursor
+  // Track mouse position for custom cursor with expanded grab area
   React.useEffect(() => {
+    const INTERACTIVE_SELECTOR =
+      'button:not(:disabled), a, input[type="range"], [role="switch"], [role="button"], .wii-tile, .wii-orb, .disc-channel-arrow, .disc-channel-btn, .mail-popup-btn, .settings-toggle, .settings-segment, .settings-reset, .mail-popup-trash';
+    
+    const HIT_AREA_EXPANSION = 35; // pixels to expand hit area for grab detection
+
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
       if (cursorRef.current) {
         cursorRef.current.style.left = e.clientX + 'px';
         cursorRef.current.style.top = e.clientY + 'px';
+        
+        // First check direct hover
+        const target = e.target;
+        let isInteractive = !!target.closest?.(INTERACTIVE_SELECTOR);
+        
+        // If not directly hovering, check expanded hit area
+        if (!isInteractive) {
+          const interactiveElements = document.querySelectorAll(INTERACTIVE_SELECTOR);
+          for (const el of interactiveElements) {
+            const rect = el.getBoundingClientRect();
+            const expandedRect = {
+              left: rect.left - HIT_AREA_EXPANSION,
+              right: rect.right + HIT_AREA_EXPANSION,
+              top: rect.top - HIT_AREA_EXPANSION,
+              bottom: rect.bottom + HIT_AREA_EXPANSION
+            };
+            if (e.clientX >= expandedRect.left && e.clientX <= expandedRect.right &&
+                e.clientY >= expandedRect.top && e.clientY <= expandedRect.bottom) {
+              isInteractive = true;
+              break;
+            }
+          }
+        }
+        
+        cursorRef.current.classList.toggle('grabbing', isInteractive);
       }
     };
+    
     document.addEventListener('mousemove', handleMouseMove);
     return () => document.removeEventListener('mousemove', handleMouseMove);
   }, []);
@@ -165,9 +214,16 @@ export default () => {
     };
   }, [middlePressed]);
 
-  const hours = String(now.getHours()).padStart(2, '0');
+  const rawHours = now.getHours();
   const minutes = String(now.getMinutes()).padStart(2, '0');
-  const timeStr = `${hours}:${minutes}`;
+  let timeStr;
+  if (settings.clockFormat === '12') {
+    const period = rawHours >= 12 ? 'PM' : 'AM';
+    const hours12 = rawHours % 12 === 0 ? 12 : rawHours % 12;
+    timeStr = `${hours12}:${minutes} ${period}`;
+  } else {
+    timeStr = `${String(rawHours).padStart(2, '0')}:${minutes}`;
+  }
 
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const dayStr = days[now.getDay()];
@@ -188,6 +244,44 @@ export default () => {
     setTilesEnabled(false);
   }, [channelOpen, channelClosing]);
 
+  const handleMailOpen = React.useCallback((e) => {
+    if (mailOpen || mailClosing) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMailOriginRect(rect);
+    setMailOpen(true);
+    setMailClosing(false);
+  }, [mailOpen, mailClosing]);
+
+  const handleMailClosed = React.useCallback(() => {
+    if (!isMountedRef.current) return;
+    setMailOpen(false);
+    setMailClosing(false);
+    setMailOriginRect(null);
+  }, []);
+
+  const handleSettingsOpen = React.useCallback((e) => {
+    if (settingsOpen || settingsClosing) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSettingsOriginRect(rect);
+    setSettingsOpen(true);
+    setSettingsClosing(false);
+  }, [settingsOpen, settingsClosing]);
+
+  const handleSettingsClosed = React.useCallback(() => {
+    if (!isMountedRef.current) return;
+    setSettingsOpen(false);
+    setSettingsClosing(false);
+    setSettingsOriginRect(null);
+  }, []);
+
+  const handleSettingChange = React.useCallback((key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleSettingsReset = React.useCallback(() => {
+    setSettings(DEFAULT_SETTINGS);
+  }, []);
+
   const handleChannelClosed = React.useCallback(() => {
     console.log('Channel closed, re-enabling tiles');
     if (!isMountedRef.current) return;
@@ -200,8 +294,13 @@ export default () => {
     document.body.style.userSelect = '';
   }, []);
 
+  // Determine if we should use smaller font for 12h format
+  const is12Hour = settings.clockFormat === '12';
+  const clockFontSize = is12Hour ? 'clamp(22px, 5.5vmin, 52px)' : 'clamp(30px, 8vmin, 76px)';
+  const clockLetterSpacing = is12Hour ? 'clamp(2px, 1.5vmin, 12px)' : 'clamp(4px, 2.2vmin, 20px)';
+
   return (
-    <div className="wii-screen">
+    <div className="wii-screen" style={{ filter: `brightness(${settings.brightness}%)` }}>
       <div 
         ref={cursorRef}
         className="custom-cursor"
@@ -229,7 +328,7 @@ export default () => {
             data-index={i}
             disabled={!tilesEnabled}
           >
-            <div className="tile-watermark" />
+            <div className="tile-watermark">Akram</div>
             <div className="tile-gloss" />
           </button>
         ))}
@@ -282,18 +381,31 @@ export default () => {
           <button 
             className="wii-orb wii-orb--left" 
             type="button" 
-            aria-label="Open Wii menu"
+            aria-label="Open settings"
+            onClick={handleSettingsOpen}
           >
-            <span className="wii-orb-label">Wii</span>
+            <svg className="settings-cog-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.2" />
+              <path d="M19.4 13a7.4 7.4 0 0 0 0-2l1.9-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-1.7-1L14.9 3h-3.8l-.4 2.4a7.5 7.5 0 0 0-1.7 1l-2.3-.9-2 3.4L6.6 11a7.4 7.4 0 0 0 0 2l-1.9 1.5 2 3.4 2.3-.9c.5.4 1.1.8 1.7 1l.4 2.4h3.8l.4-2.4c.6-.2 1.2-.6 1.7-1l2.3.9 2-3.4z" />
+            </svg>
           </button>
 
-          <div className="clock-time">{timeStr}</div>
+          <div 
+            className="clock-time" 
+            style={{
+              fontSize: clockFontSize,
+              letterSpacing: clockLetterSpacing
+            }}
+          >
+            {timeStr}
+          </div>
           <div className="clock-date">{dateStr}</div>
 
           <button 
             className="wii-orb wii-orb--right" 
             type="button" 
             aria-label="Open messages"
+            onClick={handleMailOpen}
           >
             <svg className="mail-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect x="2" y="5" width="20" height="14" rx="2.2" />
@@ -312,6 +424,27 @@ export default () => {
             setChannelClosing(true);
           }}
           onClosed={handleChannelClosed}
+        />
+      )}
+
+      {mailOpen && (
+        <MailPopup
+          originRect={mailOriginRect}
+          closing={mailClosing}
+          onRequestClose={() => setMailClosing(true)}
+          onClosed={handleMailClosed}
+        />
+      )}
+
+      {settingsOpen && (
+        <SettingsPanel
+          originRect={settingsOriginRect}
+          closing={settingsClosing}
+          settings={settings}
+          onSettingChange={handleSettingChange}
+          onReset={handleSettingsReset}
+          onRequestClose={() => setSettingsClosing(true)}
+          onClosed={handleSettingsClosed}
         />
       )}
     </div>

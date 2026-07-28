@@ -1,0 +1,200 @@
+/* MailPopup.css */
+
+.mail-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: #000;
+  opacity: 0;
+}
+
+.mail-popup-ring {
+  position: fixed;
+  z-index: 48;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #35c3db;
+  box-shadow:
+    0 0 24px 6px rgba(53, 195, 219, 0.7),
+    0 0 60px 18px rgba(53, 195, 219, 0.3);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.mail-popup-frame {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  width: min(520px, 82vw);
+  aspect-ratio: 1 / 1;
+  max-height: 82vh;
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  background: #eef0f2;
+}
+
+.mail-popup-trash {
+  position: absolute;
+  top: -22px;
+  left: -22px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  appearance: none;
+  padding: 0;
+  z-index: 3;
+  background: radial-gradient(circle at 35% 28%, #ffffff 0%, #dcdee2 55%, #b7bac1 100%);
+  box-shadow:
+    0 0 0 4px #35c3db,
+    inset 0 2px 5px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.15),
+    0 8px 18px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.mail-popup-trash:hover {
+  transform: scale(1.06);
+}
+
+.mail-popup-trash.shaking {
+  animation: mail-trash-shake 420ms ease;
+}
+
+@keyframes mail-trash-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-5px, 0) rotate(-9deg); }
+  30% { transform: translate(4px, 0) rotate(8deg); }
+  45% { transform: translate(-4px, 0) rotate(-7deg); }
+  60% { transform: translate(3px, 0) rotate(5deg); }
+  75% { transform: translate(-2px, 0) rotate(-3deg); }
+  90% { transform: translate(1px, 0) rotate(1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.mail-popup-trash svg {
+  width: 46%;
+  height: 46%;
+  fill: none;
+  stroke: #5c5d61;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mail-popup-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 15%;
+  min-height: 52px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, #6fdcef 0%, #35c3db 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mail-popup-title {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(18px, 3vw, 26px);
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.mail-popup-body {
+  position: absolute;
+  top: 15%;
+  bottom: 16%;
+  left: 0;
+  right: 0;
+  padding: clamp(16px, 3.5vh, 32px) clamp(20px, 5vw, 36px) 0;
+  overflow: hidden;
+}
+
+.mail-popup-line {
+  height: clamp(34px, 6vh, 50px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1.5px solid #cfd2d6;
+  padding-bottom: 8px;
+  text-align: center;
+}
+
+.mail-popup-line--empty {
+  min-height: clamp(34px, 6vh, 50px);
+}
+
+.mail-popup-text {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: #3a3b3f;
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+
+.mail-popup-bottombar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16%;
+  min-height: 58px;
+  border-radius: 0 0 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(10px, 2vw, 24px);
+  padding: 0 clamp(16px, 3vw, 30px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.06));
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mail-popup-btn {
+  height: clamp(36px, 5.5vh, 48px);
+  min-width: clamp(80px, 15vw, 128px);
+  border-radius: 999px;
+  border: none;
+  appearance: none;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(13px, 1.9vw, 16px);
+  background: #ffffff;
+  color: #3a3b3f;
+  box-shadow: 0 0 0 3px #35c3db, 0 4px 10px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mail-popup-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px #35c3db, 0 6px 14px rgba(0, 0, 0, 0.24);
+}
+
+.mail-popup-wii {
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 1.7vw, 15px);
+  color: #9a9ba1;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .mail-popup-frame {
+    width: 88vw;
+  }
+  .mail-popup-trash {
+    width: 46px;
+    height: 46px;
+    top: -18px;
+    left: -14px;
+  }
+}
