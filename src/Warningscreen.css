@@ -76,6 +76,13 @@
   filter: drop-shadow(0 0 6px rgba(53, 195, 219, 0.7));
 }
 
+/* 🔽 Flip chevron to point UP on mobile */
+@media (max-width: 768px) {
+  .scroll-chevron {
+    transform: rotate(180deg);
+  }
+}
+
 @keyframes chevron-bounce {
   0%,
   100% {
@@ -85,6 +92,25 @@
   50% {
     transform: translateY(8px);
     opacity: 1;
+  }
+}
+
+/* 🔽 Fix: Don't apply both rotate and translateY on mobile */
+@media (max-width: 768px) {
+  @keyframes chevron-bounce-mobile {
+    0%,
+    100% {
+      transform: rotate(180deg) translateY(0);
+      opacity: 0.55;
+    }
+    50% {
+      transform: rotate(180deg) translateY(8px);
+      opacity: 1;
+    }
+  }
+  
+  .scroll-chevron {
+    animation: chevron-bounce-mobile 1.6s ease-in-out infinite;
   }
 }
 
