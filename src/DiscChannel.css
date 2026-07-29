@@ -32,6 +32,116 @@
     inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
+/* ---------- Graphics tile: 3D floating Aero balls ---------- */
+
+.graphics-orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  transform-style: preserve-3d;
+}
+
+.graphics-orb {
+  position: absolute;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.98) 0%, rgba(220, 245, 250, 0.9) 12%, rgba(133, 214, 232, 0.85) 34%, rgba(53, 195, 219, 0.75) 60%, rgba(22, 120, 145, 0.55) 88%, rgba(10, 70, 90, 0.4) 100%);
+  box-shadow:
+    inset 0 3px 6px rgba(255, 255, 255, 0.75),
+    inset 0 -8px 14px rgba(0, 40, 55, 0.35),
+    0 6px 18px rgba(20, 60, 75, 0.28);
+  will-change: transform;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Rotating specular highlight so each sphere reads as tumbling in 3D,
+   independent of its flight path animation. */
+.graphics-orb::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  left: 18%;
+  width: 42%;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 72%);
+  animation: graphics-orb-spin linear infinite;
+  animation-duration: inherit;
+}
+
+@keyframes graphics-orb-spin {
+  from { transform: rotate(0deg) translateX(6%) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(6%) rotate(-360deg); }
+}
+
+/* Five distinct 3D drift paths - real translateZ + rotation, so combined
+   with the perspective set on .graphics-orbs' parent, balls genuinely
+   grow/shrink as they move toward/away from camera rather than faking
+   depth with opacity or blur. */
+.graphics-orb--a { animation-name: graphics-orb-path-a; }
+.graphics-orb--b { animation-name: graphics-orb-path-b; }
+.graphics-orb--c { animation-name: graphics-orb-path-c; }
+.graphics-orb--d { animation-name: graphics-orb-path-d; }
+.graphics-orb--e { animation-name: graphics-orb-path-e; }
+
+@keyframes graphics-orb-path-a {
+  0%   { transform: translate3d(0, 0, 0)          rotateX(0deg)   rotateY(0deg); }
+  22%  { transform: translate3d(70px, -55px, 90px)  rotateX(70deg)  rotateY(110deg); }
+  48%  { transform: translate3d(20px, -100px, -70px) rotateX(160deg) rotateY(230deg); }
+  74%  { transform: translate3d(-65px, -30px, 50px) rotateX(260deg) rotateY(320deg); }
+  100% { transform: translate3d(0, 0, 0)          rotateX(360deg) rotateY(360deg); }
+}
+
+@keyframes graphics-orb-path-b {
+  0%   { transform: translate3d(0, 0, 0)           rotateX(0deg)   rotateY(0deg); }
+  20%  { transform: translate3d(-90px, 40px, -100px) rotateX(-60deg) rotateY(-90deg); }
+  50%  { transform: translate3d(-40px, 95px, 60px)   rotateX(-150deg) rotateY(-210deg); }
+  78%  { transform: translate3d(60px, 30px, -60px)   rotateX(-260deg) rotateY(-300deg); }
+  100% { transform: translate3d(0, 0, 0)           rotateX(-360deg) rotateY(-360deg); }
+}
+
+@keyframes graphics-orb-path-c {
+  0%   { transform: translate3d(0, 0, 0)          rotateX(0deg)   rotateY(0deg); }
+  30%  { transform: translate3d(45px, 60px, 40px)  rotateX(100deg) rotateY(-80deg); }
+  60%  { transform: translate3d(-55px, 25px, -80px) rotateX(220deg) rotateY(-190deg); }
+  85%  { transform: translate3d(-20px, -45px, 30px) rotateX(300deg) rotateY(-300deg); }
+  100% { transform: translate3d(0, 0, 0)          rotateX(360deg) rotateY(-360deg); }
+}
+
+@keyframes graphics-orb-path-d {
+  0%   { transform: translate3d(0, 0, 0)         rotateX(0deg)   rotateY(0deg); }
+  25%  { transform: translate3d(-30px, -50px, 60px) rotateX(-90deg) rotateY(140deg); }
+  55%  { transform: translate3d(35px, -20px, -50px) rotateX(-180deg) rotateY(260deg); }
+  80%  { transform: translate3d(20px, 40px, 30px)  rotateX(-280deg) rotateY(340deg); }
+  100% { transform: translate3d(0, 0, 0)         rotateX(-360deg) rotateY(360deg); }
+}
+
+@keyframes graphics-orb-path-e {
+  0%   { transform: translate3d(0, 0, 0)          rotateX(0deg)    rotateY(0deg); }
+  18%  { transform: translate3d(55px, 35px, -90px)  rotateX(50deg)   rotateY(-120deg); }
+  42%  { transform: translate3d(80px, -40px, 50px)  rotateX(140deg)  rotateY(-40deg); }
+  68%  { transform: translate3d(-50px, -60px, -40px) rotateX(230deg) rotateY(80deg); }
+  90%  { transform: translate3d(-70px, 20px, 70px)  rotateX(310deg)  rotateY(200deg); }
+  100% { transform: translate3d(0, 0, 0)          rotateX(360deg)  rotateY(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graphics-orb,
+  .graphics-orb::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .graphics-orbs {
+    display: none;
+  }
+}
+
 .disc-channel-scanlines {
   position: absolute;
   inset: 0;
@@ -199,5 +309,59 @@
     flex-direction: row;
     gap: 10px;
     padding: 0 4%;
+  }
+}
+
+/* ---------- Graphics channel grid lines fade-in ---------- */
+
+/* The grid lines that appear in the Graphics channel */
+.graphics-grid-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  animation: gridLinesFadeIn 1.2s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+@keyframes gridLinesFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The scanline overlay also fades in */
+.disc-channel-scanlines {
+  opacity: 0;
+  animation: scanlinesFadeIn 1.0s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+@keyframes scanlinesFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The vignette fades in too for a smoother reveal */
+.disc-channel-vignette {
+  opacity: 0;
+  animation: vignetteFadeIn 0.8s ease-out forwards;
+  animation-delay: 0.6s;
+}
+
+@keyframes vignetteFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }

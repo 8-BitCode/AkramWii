@@ -4,6 +4,21 @@ import "./App.css";
 import DiscChannel from "./Discchannel";
 import MailPopup from "./Mailpopup";
 import SettingsPanel from "./Settingspanel";
+import aboutMeGif from "./Assets/Aboutmepreview.gif";
+import graphicsGif from "./Assets/Graphicspreview.gif";
+import portfolioGif from "./Assets/Portfoliopreview.gif";
+import experiencePreview from "./Assets/Experiencepreview.png";
+import { AkramTileArt } from "./AkramArt";
+
+// Use a different approach - try to import the mobile image
+// If it fails, we'll use the desktop image as fallback
+let experiencePreviewMobile;
+try {
+  // Use dynamic import with a different approach
+  experiencePreviewMobile = new URL('./Assets/Experiencepreviewmobile.png', import.meta.url).href;
+} catch (e) {
+  experiencePreviewMobile = experiencePreview;
+}
 
 const DEFAULT_SETTINGS = {
   musicOn: true,
@@ -22,6 +37,7 @@ export default () => {
   const [channelOpen, setChannelOpen] = React.useState(false);
   const [channelClosing, setChannelClosing] = React.useState(false);
   const [originRect, setOriginRect] = React.useState(null);
+  const [selectedTileIndex, setSelectedTileIndex] = React.useState(null);
   const [tilesEnabled, setTilesEnabled] = React.useState(true);
   const [mailOpen, setMailOpen] = React.useState(false);
   const [mailClosing, setMailClosing] = React.useState(false);
@@ -34,12 +50,25 @@ export default () => {
   const shiftPressedRef = React.useRef(false);
   const tileRefs = React.useRef([]);
   const isMountedRef = React.useRef(true);
+  const [isMobilePortrait, setIsMobilePortrait] = React.useState(
+    window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches
+  );
 
   React.useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
+  }, []);
+
+  // Check for mobile portrait on resize
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 600px) and (orientation: portrait)');
+    const handleChange = (e) => {
+      setIsMobilePortrait(e.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   React.useEffect(() => {
@@ -52,7 +81,7 @@ export default () => {
     const INTERACTIVE_SELECTOR =
       'button:not(:disabled), a, input[type="range"], [role="switch"], [role="button"], .wii-tile, .wii-orb, .disc-channel-arrow, .disc-channel-btn, .mail-popup-btn, .settings-toggle, .settings-segment, .settings-reset, .mail-popup-trash';
     
-    const HIT_AREA_EXPANSION = 35; // pixels to expand hit area for grab detection
+    const HIT_AREA_EXPANSION = 35;
 
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -60,11 +89,9 @@ export default () => {
         cursorRef.current.style.left = e.clientX + 'px';
         cursorRef.current.style.top = e.clientY + 'px';
         
-        // First check direct hover
         const target = e.target;
         let isInteractive = !!target.closest?.(INTERACTIVE_SELECTOR);
         
-        // If not directly hovering, check expanded hit area
         if (!isInteractive) {
           const interactiveElements = document.querySelectorAll(INTERACTIVE_SELECTOR);
           for (const el of interactiveElements) {
@@ -239,6 +266,7 @@ export default () => {
     }
     const rect = e.currentTarget.getBoundingClientRect();
     setOriginRect(rect);
+    setSelectedTileIndex(index);
     setChannelOpen(true);
     setChannelClosing(false);
     setTilesEnabled(false);
@@ -288,16 +316,52 @@ export default () => {
     setChannelOpen(false);
     setChannelClosing(false);
     setOriginRect(null);
+    setSelectedTileIndex(null);
     setTilesEnabled(true);
-    // Reset any lingering styles
     document.body.style.pointerEvents = '';
     document.body.style.userSelect = '';
   }, []);
 
-  // Determine if we should use smaller font for 12h format
   const is12Hour = settings.clockFormat === '12';
   const clockFontSize = is12Hour ? 'clamp(22px, 5.5vmin, 52px)' : 'clamp(30px, 8vmin, 76px)';
   const clockLetterSpacing = is12Hour ? 'clamp(2px, 1.5vmin, 12px)' : 'clamp(4px, 2.2vmin, 20px)';
+
+  // Get the appropriate tile index for special tiles based on device
+  const getSpecialTileIndex = (type) => {
+    if (isMobilePortrait) {
+      // On mobile portrait: Portfolio = index 0, About Me = index 1, Graphics = index 2, Akram = index 3
+      if (type === 'portfolio') return 0;
+      if (type === 'aboutme') return 1;
+      if (type === 'graphics') return 2;
+      if (type === 'akram') return 3;
+    }
+    // Desktop/tablet: Portfolio = index 0, About Me = index 3, Graphics = index 6, Akram = index 10
+    if (type === 'portfolio') return 0;
+    if (type === 'aboutme') return 3;
+    if (type === 'graphics') return 6;
+    if (type === 'akram') return 10;
+    return -1;
+  };
+
+  const portfolioIndex = getSpecialTileIndex('portfolio');
+  const aboutMeIndex = getSpecialTileIndex('aboutme');
+  const graphicsIndex = getSpecialTileIndex('graphics');
+  const akramIndex = getSpecialTileIndex('akram');
+
+  // Function to get the correct Akram image based on device
+  const getAkramImage = () => {
+    if (isMobilePortrait) {
+      // Try to use the mobile image, fallback to desktop if it fails
+      try {
+        // Use a dynamic import approach
+        const img = new URL('./Assets/Experiencepreviewmobile.png', import.meta.url);
+        return img.href;
+      } catch (e) {
+        return experiencePreview;
+      }
+    }
+    return experiencePreview;
+  };
 
   return (
     <div className="wii-screen" style={{ filter: `brightness(${settings.brightness}%)` }}>
@@ -315,23 +379,107 @@ export default () => {
       />
 
       <div className="wii-grid">
-        {Array.from({ length: tileCount }).map((_, i) => (
-          <button
-            key={i}
-            ref={(el) => {
-              tileRefs.current[i] = el;
-            }}
-            className={`wii-tile ${tilesEnabled ? 'enabled' : 'disabled'}`}
-            type="button"
-            aria-label="Empty channel slot"
-            onClick={(e) => handleTileClick(e, i)}
-            data-index={i}
-            disabled={!tilesEnabled}
-          >
-            <div className="tile-watermark">Akram</div>
-            <div className="tile-gloss" />
-          </button>
-        ))}
+        {Array.from({ length: tileCount }).map((_, i) => {
+          // Check if this is a special tile
+          const isPortfolioTile = i === portfolioIndex;
+          const isAboutMeTile = i === aboutMeIndex;
+          const isGraphicsTile = i === graphicsIndex;
+          const isAkramTile = i === akramIndex;
+          const isSpecialTile = isPortfolioTile || isAboutMeTile || isGraphicsTile || isAkramTile;
+          
+          // Get the appropriate content
+          let tileContent = null;
+          let tileLabel = "Empty channel slot";
+          
+          if (isPortfolioTile) {
+            tileContent = (
+              <img 
+                src={portfolioGif} 
+                alt="Portfolio" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 'inherit',
+                }}
+              />
+            );
+            tileLabel = "Portfolio";
+          } else if (isAboutMeTile) {
+            tileContent = (
+              <img 
+                src={aboutMeGif} 
+                alt="About Me" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 'inherit',
+                }}
+              />
+            );
+            tileLabel = "About Me";
+          } else if (isGraphicsTile) {
+            tileContent = (
+              <img 
+                src={graphicsGif} 
+                alt="Graphics" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 'inherit',
+                  background: '#e4e5d5',
+                }}
+              />
+            );
+            tileLabel = "Graphics";
+          } else if (isAkramTile) {
+            // Use mobile or desktop image based on device
+            const akramImage = getAkramImage();
+            tileContent = (
+              <img 
+                src={akramImage} 
+                alt="The Akram Experience" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 'inherit',
+                }}
+              />
+            );
+            tileLabel = "The Akram Experience";
+          } else {
+            tileContent = <div className="tile-watermark">Akram</div>;
+          }
+          
+          return (
+            <button
+              key={i}
+              ref={(el) => {
+                tileRefs.current[i] = el;
+              }}
+              className={`wii-tile ${tilesEnabled ? 'enabled' : 'disabled'}`}
+              type="button"
+              aria-label={tileLabel}
+              onClick={(e) => handleTileClick(e, i)}
+              data-index={i}
+              disabled={!tilesEnabled}
+            >
+              {tileContent}
+              <div className="tile-gloss" />
+            </button>
+          );
+        })}
       </div>
 
       <div className="bar-wrap">
@@ -419,6 +567,7 @@ export default () => {
         <DiscChannel
           originRect={originRect}
           closing={channelClosing}
+          tileIndex={selectedTileIndex}
           onRequestClose={() => {
             console.log('Request close');
             setChannelClosing(true);
