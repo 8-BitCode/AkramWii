@@ -410,8 +410,18 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
   const treeY = H * 0.75;
   const unit = 68;
 
-  // Check if we're on mobile
-  const isMobile = window.matchMedia('(max-width: 600px)').matches;
+  // Check if we're on mobile. Previously this called matchMedia() fresh
+  // on every render (allocating a new MediaQueryList each time) and never
+  // updated on resize/rotation; now it's tracked with a real listener.
+  const [isMobile, setIsMobile] = React.useState(
+    () => window.matchMedia('(max-width: 600px)').matches
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 600px)');
+    const handleChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handleChange);
+    return () => mq.removeEventListener('change', handleChange);
+  }, []);
 
   // Track the current unlock step in the animation sequence
   const [step, setStep] = React.useState(0);

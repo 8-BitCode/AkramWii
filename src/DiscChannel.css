@@ -312,6 +312,196 @@
   }
 }
 
+/* ---------- Graphics channel view ---------- */
+
+.graphics-view {
+  position: absolute;
+  top: 0;
+  bottom: clamp(64px, 13%, 104px);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  background: #f5d742;
+}
+
+.graphics-grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0, 0, 0, 0.3) 39px, rgba(0, 0, 0, 0.3) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0, 0, 0, 0.3) 39px, rgba(0, 0, 0, 0.3) 40px),
+    repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(0, 0, 0, 0.08) 80px, rgba(0, 0, 0, 0.08) 81px),
+    repeating-linear-gradient(-45deg, transparent, transparent 80px, rgba(0, 0, 0, 0.08) 80px, rgba(0, 0, 0, 0.08) 81px),
+    radial-gradient(circle at 20px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 60px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 100px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 140px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 180px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 20px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 60px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 100px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 140px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 180px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px);
+  background-size:
+    100% 100%, 100% 100%, 160px 160px, 160px 160px,
+    200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px,
+    200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px;
+  background-position: center center;
+  background-repeat: repeat;
+}
+
+.graphics-frame-outer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 4vh, 60px);
+  z-index: 1;
+}
+
+.graphics-frame-inner {
+  position: relative;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 2.5vh, 32px);
+  background: linear-gradient(160deg, #f8f9fb 0%, #e2e4e8 40%, #d0d3d8 100%);
+  border-radius: 16px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 16px 48px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.graphics-frame-border-ring {
+  position: absolute;
+  inset: 3px;
+  border-radius: 13px;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 50%, rgba(0,0,0,0.05) 100%);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.graphics-frame-inner-shadow {
+  position: absolute;
+  inset: 6px;
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(ellipse at 50% 30%, transparent 50%, rgba(0,0,0,0.04) 100%);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.graphics-frame-corner {
+  position: absolute;
+  width: clamp(16px, 2.5vh, 32px);
+  height: clamp(16px, 2.5vh, 32px);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0.7;
+  box-shadow: 0 0 8px rgba(53, 195, 219, 0.2);
+}
+
+.graphics-frame-corner--tl {
+  top: 6px;
+  left: 6px;
+  border-top: 3px solid #35c3db;
+  border-left: 3px solid #35c3db;
+  border-radius: 6px 0 0 0;
+}
+
+.graphics-frame-corner--tr {
+  top: 6px;
+  right: 6px;
+  border-top: 3px solid #35c3db;
+  border-right: 3px solid #35c3db;
+  border-radius: 0 6px 0 0;
+}
+
+.graphics-frame-corner--bl {
+  bottom: 6px;
+  left: 6px;
+  border-bottom: 3px solid #35c3db;
+  border-left: 3px solid #35c3db;
+  border-radius: 0 0 0 6px;
+}
+
+.graphics-frame-corner--br {
+  bottom: 6px;
+  right: 6px;
+  border-bottom: 3px solid #35c3db;
+  border-right: 3px solid #35c3db;
+  border-radius: 0 0 6px 0;
+}
+
+.graphics-frame-glow {
+  position: absolute;
+  inset: 8px;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse at 20% 20%, rgba(53,195,219,0.04) 0%, transparent 60%);
+}
+
+.graphics-content {
+  position: relative;
+  width: auto;
+  height: auto;
+  max-width: min(70vw, 600px);
+  max-height: min(60vh, 500px);
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e4e5d5;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 2;
+}
+
+.graphics-content-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.03) 100%);
+}
+
+.graphics-content-media {
+  display: block;
+  max-width: min(70vw, 600px);
+  max-height: min(60vh, 500px);
+  width: auto;
+  height: auto;
+  transition: opacity 0.5s ease;
+  background: #e4e5d5;
+}
+
+.graphics-content-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.graphics-frame-outer-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse at center, rgba(53,195,219,0.06) 0%, transparent 70%);
+  filter: blur(8px);
+}
+
 /* ---------- Graphics channel grid lines fade-in ---------- */
 
 /* The grid lines that appear in the Graphics channel */

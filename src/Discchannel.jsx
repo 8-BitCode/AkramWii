@@ -13,7 +13,7 @@ const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
 const TILE_RADIUS = "12% / 16%";
 
-export default function DiscChannel({ originRect, closing, tileIndex, onRequestClose, onClosed }) {
+export default function DiscChannel({ originRect, closing, tileIndex, isMobilePortrait: isMobilePortraitProp, onRequestClose, onClosed }) {
   const frameRef = React.useRef(null);
   const backdropRef = React.useRef(null);
   const animationFrameRef = React.useRef(null);
@@ -26,8 +26,12 @@ export default function DiscChannel({ originRect, closing, tileIndex, onRequestC
   const [akramAnimationPlayed, setAkramAnimationPlayed] = React.useState(false);
   const videoRef = React.useRef(null);
 
-  // Check if we're on mobile portrait
-  const isMobilePortrait = window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches;
+  // Prefer the value App already tracks (and updates on resize). Only
+  // compute it ourselves - once, not on every render - if it wasn't passed.
+  const isMobilePortrait = isMobilePortraitProp ?? React.useMemo(
+    () => window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches,
+    []
+  );
 
   // Check which tile is being viewed - handle both desktop and mobile indices
   const isPortfolio = tileIndex === 0; // Same on both desktop and mobile
@@ -136,7 +140,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, onRequestC
       // Reset to beginning before playing
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(err => {
-        console.log('Video autoplay failed:', err);
+        console.warn('Video autoplay failed:', err);
       });
     }
   }, [showStartVideo, videoLoaded]);
@@ -367,7 +371,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, onRequestC
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(err => {
-        console.log('Video play failed:', err);
+        console.warn('Video play failed:', err);
       });
     }
   };
@@ -459,292 +463,45 @@ export default function DiscChannel({ originRect, closing, tileIndex, onRequestC
         </div>
       );
     } else if (isGraphics) {
-      // Graphics - with yellow background and black grid lines
+      // Graphics - with yellow background and black grid lines.
+      // All the decorative layers below used to be inline `style={{...}}`
+      // objects rebuilt from scratch on every render (a lot of gradient
+      // parsing work for content that never changes). They're now static
+      // CSS classes defined in DiscChannel.css, computed once by the
+      // browser instead of re-created by React every render.
       return (
-        <div 
-          style={{ 
-            position: 'absolute',
-            top: 0,
-            bottom: 'clamp(64px, 13%, 104px)',
-            left: 0,
-            right: 0,
-            overflow: 'hidden',
-            background: '#f5d742',
-          }}
-        >
-          {/* Yellow background with black grid pattern */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundImage: `
-                /* Horizontal grid lines - black */
-                repeating-linear-gradient(
-                  0deg,
-                  transparent,
-                  transparent 39px,
-                  rgba(0, 0, 0, 0.3) 39px,
-                  rgba(0, 0, 0, 0.3) 40px
-                ),
-                /* Vertical grid lines - black */
-                repeating-linear-gradient(
-                  90deg,
-                  transparent,
-                  transparent 39px,
-                  rgba(0, 0, 0, 0.3) 39px,
-                  rgba(0, 0, 0, 0.3) 40px
-                ),
-                /* Diagonal grid lines for depth - black */
-                repeating-linear-gradient(
-                  45deg,
-                  transparent,
-                  transparent 80px,
-                  rgba(0, 0, 0, 0.08) 80px,
-                  rgba(0, 0, 0, 0.08) 81px
-                ),
-                repeating-linear-gradient(
-                  -45deg,
-                  transparent,
-                  transparent 80px,
-                  rgba(0, 0, 0, 0.08) 80px,
-                  rgba(0, 0, 0, 0.08) 81px
-                ),
-                /* Grid intersection dots - black */
-                radial-gradient(circle at 20px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 60px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 100px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 140px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 180px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 20px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 60px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 100px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 140px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-                radial-gradient(circle at 180px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px)
-              `,
-              backgroundSize: `
-                100% 100%,
-                100% 100%,
-                160px 160px,
-                160px 160px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px,
-                200px 200px
-              `,
-              backgroundPosition: 'center center',
-              backgroundRepeat: 'repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          />
+        <div className="graphics-view">
+          <div className="graphics-grid-bg" />
 
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 'clamp(20px, 4vh, 60px)',
-              zIndex: 1,
-            }}
-          >
-            {/* Main frame container with depth */}
-            <div
-              style={{
-                position: 'relative',
-                width: 'auto',
-                height: 'auto',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 'clamp(14px, 2.5vh, 32px)',
-                background: 'linear-gradient(160deg, #f8f9fb 0%, #e2e4e8 40%, #d0d3d8 100%)',
-                borderRadius: '16px',
-                boxShadow: `
-                  0 2px 4px rgba(0, 0, 0, 0.06),
-                  0 8px 24px rgba(0, 0, 0, 0.15),
-                  0 16px 48px rgba(0, 0, 0, 0.12),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.7)
-                `,
-              }}
-            >
-              {/* Outer border ring */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '3px',
-                  borderRadius: '13px',
-                  pointerEvents: 'none',
-                  zIndex: 3,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 50%, rgba(0,0,0,0.05) 100%)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                }}
-              />
+          <div className="graphics-frame-outer">
+            <div className="graphics-frame-inner">
+              <div className="graphics-frame-border-ring" />
+              <div className="graphics-frame-inner-shadow" />
+              <div className="graphics-frame-corner graphics-frame-corner--tl" />
+              <div className="graphics-frame-corner graphics-frame-corner--tr" />
+              <div className="graphics-frame-corner graphics-frame-corner--bl" />
+              <div className="graphics-frame-corner graphics-frame-corner--br" />
+              <div className="graphics-frame-glow" />
 
-              {/* Inner shadow overlay */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '6px',
-                  borderRadius: '10px',
-                  pointerEvents: 'none',
-                  zIndex: 4,
-                  background: 'radial-gradient(ellipse at 50% 30%, transparent 50%, rgba(0,0,0,0.04) 100%)',
-                  boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.06)',
-                }}
-              />
-              {/* Wii-style decorative corners */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '6px',
-                  left: '6px',
-                  width: 'clamp(16px, 2.5vh, 32px)',
-                  height: 'clamp(16px, 2.5vh, 32px)',
-                  borderTop: '3px solid #35c3db',
-                  borderLeft: '3px solid #35c3db',
-                  borderRadius: '6px 0 0 0',
-                  pointerEvents: 'none',
-                  zIndex: 6,
-                  opacity: 0.7,
-                  boxShadow: '0 0 8px rgba(53, 195, 219, 0.2)',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '6px',
-                  right: '6px',
-                  width: 'clamp(16px, 2.5vh, 32px)',
-                  height: 'clamp(16px, 2.5vh, 32px)',
-                  borderTop: '3px solid #35c3db',
-                  borderRight: '3px solid #35c3db',
-                  borderRadius: '0 6px 0 0',
-                  pointerEvents: 'none',
-                  zIndex: 6,
-                  opacity: 0.7,
-                  boxShadow: '0 0 8px rgba(53, 195, 219, 0.2)',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '6px',
-                  left: '6px',
-                  width: 'clamp(16px, 2.5vh, 32px)',
-                  height: 'clamp(16px, 2.5vh, 32px)',
-                  borderBottom: '3px solid #35c3db',
-                  borderLeft: '3px solid #35c3db',
-                  borderRadius: '0 0 0 6px',
-                  pointerEvents: 'none',
-                  zIndex: 6,
-                  opacity: 0.7,
-                  boxShadow: '0 0 8px rgba(53, 195, 219, 0.2)',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '6px',
-                  right: '6px',
-                  width: 'clamp(16px, 2.5vh, 32px)',
-                  height: 'clamp(16px, 2.5vh, 32px)',
-                  borderBottom: '3px solid #35c3db',
-                  borderRight: '3px solid #35c3db',
-                  borderRadius: '0 0 6px 0',
-                  pointerEvents: 'none',
-                  zIndex: 6,
-                  opacity: 0.7,
-                  boxShadow: '0 0 8px rgba(53, 195, 219, 0.2)',
-                }}
-              />
+              <div className="graphics-content">
+                <div className="graphics-content-glow" />
 
-              {/* Subtle blue glow behind the corners */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '8px',
-                  borderRadius: '8px',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                  background: 'radial-gradient(ellipse at 20% 20%, rgba(53,195,219,0.04) 0%, transparent 60%)',
-                }}
-              />
-
-              {/* The actual image/video content */}
-              <div
-                style={{
-                  position: 'relative',
-                  width: 'auto',
-                  height: 'auto',
-                  maxWidth: 'min(70vw, 600px)',
-                  maxHeight: 'min(60vh, 500px)',
-                  overflow: 'hidden',
-                  borderRadius: '8px',
-                  background: '#e4e5d5',
-                  boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.08)',
-                  zIndex: 2,
-                }}
-              >
-                {/* Content inner glow */}
-                <div
+                <img
+                  src={previewGif}
+                  alt={tileLabel}
+                  className="graphics-content-media"
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    zIndex: 3,
-                    background: 'radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.03) 100%)',
-                  }}
-                />
-                
-                <img 
-                  src={previewGif} 
-                  alt={tileLabel} 
-                  style={{
-                    display: 'block',
-                    maxWidth: 'min(70vw, 600px)',
-                    maxHeight: 'min(60vh, 500px)',
-                    width: 'auto',
-                    height: 'auto',
                     objectFit: objectFit,
                     opacity: showStartVideo && videoLoaded ? 0 : 1,
-                    transition: 'opacity 0.5s ease',
-                    zIndex: 1,
-                    background: '#e4e5d5',
                   }}
                 />
                 <video
                   ref={videoRef}
                   src={startVideo}
+                  className="graphics-content-media graphics-content-video"
                   style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
                     objectFit: objectFit,
-                    display: 'block',
                     opacity: showStartVideo && videoLoaded ? 1 : 0,
-                    transition: 'opacity 0.5s ease',
-                    zIndex: 2,
-                    background: '#e4e5d5',
                   }}
                   playsInline
                   muted={false}
@@ -757,18 +514,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, onRequestC
                 />
               </div>
 
-              {/* Subtle outer glow */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '-4px',
-                  borderRadius: '20px',
-                  pointerEvents: 'none',
-                  zIndex: 0,
-                  background: 'radial-gradient(ellipse at center, rgba(53,195,219,0.06) 0%, transparent 70%)',
-                  filter: 'blur(8px)',
-                }}
-              />
+              <div className="graphics-frame-outer-glow" />
             </div>
           </div>
         </div>
