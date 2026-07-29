@@ -8,7 +8,7 @@ import aboutMeGif from "./Assets/Aboutmepreview.gif";
 import graphicsGif from "./Assets/Graphicspreview.gif";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
 import experiencePreview from "./Assets/Experiencepreview.png";
-import { AkramTileArt } from "./AkramArt";
+import { AkramTileArt } from "./Akramart";
 
 // Use a different approach - try to import the mobile image
 // If it fails, we'll use the desktop image as fallback
