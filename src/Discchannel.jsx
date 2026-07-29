@@ -7,7 +7,7 @@ import graphicsGif from "./Assets/Graphicspreview.gif";
 import graphicsStartMp4 from "./Assets/Graphicspreviewstart.mp4";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
 import portfolioStartMp4 from "./Assets/Portfoliopreviewstart.mp4";
-import { AkramExpandedArt } from "./AkramArt";
+import { AkramExpandedArt } from "./Akramart";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
