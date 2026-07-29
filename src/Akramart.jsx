@@ -155,6 +155,32 @@ const TREE_STYLE = `
     35%  { opacity: 1; transform: scale(1.1) rotate(30deg); }
     100% { opacity: 0; transform: scale(0.5) rotate(60deg); }
   }
+  /* Experience bounce animation */
+  .akram-experience-bounce {
+    display: inline-block;
+    transform-origin: center;
+    animation: akram-experience-bounce-fx 2.5s ease-in-out infinite;
+  }
+  @keyframes akram-experience-bounce-fx {
+    0%, 100% { 
+      transform: translateY(0px) scale(1);
+    }
+    15% {
+      transform: translateY(-8px) scale(1.02);
+    }
+    30% {
+      transform: translateY(0px) scale(1);
+    }
+    45% {
+      transform: translateY(-5px) scale(1.01);
+    }
+    60% {
+      transform: translateY(0px) scale(1);
+    }
+    80% {
+      transform: translateY(-2px) scale(1);
+    }
+  }
 `;
 
 /* ---------- the skill tree itself ----------
@@ -460,12 +486,16 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
   const pt = (n) => ({ x: treeX + n.dx * unit, y: treeY + n.dy * unit });
   const fxNode = justUnlockedIndex !== null ? pt(NODES[justUnlockedIndex]) : pt(NODES[NODES.length - 1]);
 
-  // Mobile-specific adjustments
-  const titleY = isMobile ? H * 0.22 : H * 0.30;
+  // Keep titles at safe position, adjust tree and unit size for more space
+  const titleY = isMobile ? H * 0.24 : H * 0.30; // Safe position
   const subtitleOffset = isMobile ? 0 : 145;
   const subtitleY = isMobile ? titleY + 38 : titleY + 44;
   const subtitleFontSize = isMobile ? 32 : 44;
   const titleFontSize = isMobile ? 40 : 60;
+
+  // Reduced unit size and adjusted tree position for more space
+  const treeUnit = unit * 0.92; // Slightly smaller tree
+  const treeYAdjusted = (isMobile ? treeY * 0.90 : treeY * 0.94); // Moved up slightly
 
   return (
     <svg
@@ -519,6 +549,7 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
       >
         The Akram
       </text>
+      
       <text
         x={W / 2 + subtitleOffset}
         y={subtitleY}
@@ -528,14 +559,15 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
         fontWeight="300"
         fontSize={subtitleFontSize}
         fill={TEAL}
+        className="akram-experience-bounce"
       >
         Experience
       </text>
 
       <SkillTree
         x={treeX}
-        y={treeY}
-        unit={unit}
+        y={treeYAdjusted}
+        unit={treeUnit}
         unlockedCount={unlockedCount}
         newIndex={justUnlockedIndex}
         showLabels
@@ -547,8 +579,8 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
             <circle
               className="akram-shockwave"
               cx={treeX}
-              cy={treeY + NODES[NODES.length - 1].dy * unit * 0.4}
-              r={unit * 2.4}
+              cy={treeYAdjusted + NODES[NODES.length - 1].dy * treeUnit * 0.4}
+              r={treeUnit * 2.4}
               fill="none"
               stroke={GREEN}
               strokeWidth="5"
@@ -556,14 +588,14 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
           )}
           {justUnlockedIndex !== null && !fullyMastered && SPARKLE_RING.map((s, i) => {
             const rad = (s.angle * Math.PI) / 180;
-            const sx = fxNode.x + Math.cos(rad) * unit * s.dist * 0.6;
-            const sy = fxNode.y + Math.sin(rad) * unit * s.dist * 0.6;
+            const sx = fxNode.x + Math.cos(rad) * treeUnit * s.dist * 0.6;
+            const sy = fxNode.y + Math.sin(rad) * treeUnit * s.dist * 0.6;
             return <Sparkle key={i} x={sx} y={sy} delay={s.delay} size={s.size} />;
           })}
           {fullyMastered && SPARKLE_RING.map((s, i) => {
             const rad = (s.angle * Math.PI) / 180;
-            const sx = fxNode.x + Math.cos(rad) * unit * s.dist * 0.6;
-            const sy = fxNode.y + Math.sin(rad) * unit * s.dist * 0.6;
+            const sx = fxNode.x + Math.cos(rad) * treeUnit * s.dist * 0.6;
+            const sy = fxNode.y + Math.sin(rad) * treeUnit * s.dist * 0.6;
             return <Sparkle key={i} x={sx} y={sy} delay={s.delay} size={s.size} />;
           })}
         </g>
