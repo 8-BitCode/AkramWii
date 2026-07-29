@@ -7,7 +7,7 @@ import SettingsPanel from "./Settingspanel";
 import aboutMeGif from "./Assets/Aboutmepreview.gif";
 import graphicsGif from "./Assets/Graphicspreviewtile.gif";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
-import experiencePreview from "./Assets/GIF 29-07-2026 23-32-09.gif";
+import experiencePreview from "./Assets/Experiencepreview.gif";
 import { AkramTileArt } from "./Akramart";
 
 // Use a different approach - try to import the mobile image
