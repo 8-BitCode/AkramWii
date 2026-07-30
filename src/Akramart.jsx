@@ -448,7 +448,7 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
     }
 
     const totalNodes = NODES.length;
-    const delayPerStep = 450; // ms between each node unlock
+    const delayPerStep = 350; // ms between each node unlock
 
     const runStep = () => {
       setStep((prevStep) => {
@@ -465,7 +465,7 @@ export function AkramExpandedArt({ playTrigger = 0 }) {
     };
 
     // Start the sequence with a small delay
-    timeoutRef.current = setTimeout(runStep, 300);
+    timeoutRef.current = setTimeout(runStep, 200);
 
     return () => {
       if (timeoutRef.current) {

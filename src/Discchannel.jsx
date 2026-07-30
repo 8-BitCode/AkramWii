@@ -8,10 +8,139 @@ import graphicsStartMp4 from "./Assets/Graphicspreviewstart.mp4";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
 import portfolioStartMp4 from "./Assets/Portfoliopreviewstart.mp4";
 import { AkramExpandedArt } from "./Akramart";
+import AkramPage from "./Akrampage";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
 const TILE_RADIUS = "12% / 16%";
+
+/* ---------- Wii-style disc-swoosh wipe, played between the Akram
+   Experience's skill-tree animation and the actual page. A big
+   diagonal swoosh - same curve/gradient language as the Disc Channel
+   header - sweeps across the screen, fully covers it for a beat with
+   a soft flash and a scatter of sparks, then sweeps on off to reveal
+   the page underneath, like a channel loading into its content. ---------- */
+const WIPE_IN_MS = 460;
+const WIPE_HOLD_MS = 180;
+const WIPE_OUT_MS = 460;
+
+function WiiWipeTransition({ active, onCovered, onDone }) {
+  const [stage, setStage] = React.useState("idle"); // idle -> in -> hold -> out
+  const timeoutsRef = React.useRef([]);
+  const firedRef = React.useRef(false);
+
+  const sparks = React.useMemo(
+    () =>
+      Array.from({ length: 12 }).map((_, i) => ({
+        id: i,
+        top: `${6 + Math.random() * 88}%`,
+        size: 5 + Math.random() * 8,
+        delay: Math.random() * 300,
+      })),
+    []
+  );
+
+  React.useEffect(() => {
+    if (!active || firedRef.current) return undefined;
+    firedRef.current = true;
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      onCovered?.();
+      onDone?.();
+      firedRef.current = false;
+      return undefined;
+    }
+
+    setStage("in");
+    timeoutsRef.current.push(
+      setTimeout(() => {
+        setStage("hold");
+        onCovered?.();
+      }, WIPE_IN_MS),
+      setTimeout(() => setStage("out"), WIPE_IN_MS + WIPE_HOLD_MS),
+      setTimeout(() => {
+        setStage("idle");
+        firedRef.current = false;
+        onDone?.();
+      }, WIPE_IN_MS + WIPE_HOLD_MS + WIPE_OUT_MS)
+    );
+
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
+  }, [active]);
+
+  if (stage === "idle") return null;
+
+  return (
+    <div className={`wii-wipe wii-wipe--${stage}`} aria-hidden="true">
+      <div className="wii-wipe-bar">
+        <span className="wii-wipe-shine" />
+        {stage !== "out" &&
+          sparks.map((s) => (
+            <span
+              key={s.id}
+              className="wii-wipe-spark"
+              style={{ "--top": s.top, "--size": `${s.size}px`, "--delay": `${s.delay}ms` }}
+            />
+          ))}
+      </div>
+      <div className="wii-wipe-flash" />
+    </div>
+  );
+}
+
+function HomeMenuOverlay({ onClose, onGoToMenu }) {
+  // Handle ESC key to close the overlay - works in all browsers
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check for Escape key using multiple properties for cross-browser support
+      const isEscape = 
+        e.key === 'Escape' || 
+        e.keyCode === 27 || 
+        e.code === 'Escape';
+      
+      if (isEscape) {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    
+    // Use capture phase to ensure we catch the event
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [onClose]);
+
+  return (
+    <div className="wii-home-overlay" role="dialog" aria-modal="true" aria-label="HOME Menu">
+      <div className="wii-home-bar wii-home-bar--top">
+        <span className="wii-home-title">HOME Menu</span>
+        <button type="button" className="wii-home-close-btn" onClick={onClose}>
+          <span className="wii-home-close-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3.5 3.5 10.5V20.5H9.5V14.5H14.5V20.5H20.5V10.5Z" />
+            </svg>
+          </span>
+          Close
+        </button>
+      </div>
+
+      <div className="wii-home-center">
+        <button type="button" className="wii-home-menu-btn" onClick={onGoToMenu}>
+          Wii Menu
+        </button>
+      </div>
+
+      <div className="wii-home-bar wii-home-bar--bottom" />
+    </div>
+  );
+}
 
 export default function DiscChannel({ originRect, closing, tileIndex, isMobilePortrait: isMobilePortraitProp, onRequestClose, onClosed }) {
   const frameRef = React.useRef(null);
@@ -24,6 +153,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const [videoLoaded, setVideoLoaded] = React.useState(false);
   const [akramPlayTrigger, setAkramPlayTrigger] = React.useState(0);
   const [akramAnimationPlayed, setAkramAnimationPlayed] = React.useState(false);
+  const [akramPageVisible, setAkramPageVisible] = React.useState(false);
+  const [showWipe, setShowWipe] = React.useState(false);
+  const [showHomeMenu, setShowHomeMenu] = React.useState(false);
   const videoRef = React.useRef(null);
 
   // Prefer the value App already tracks (and updates on resize). Only
@@ -90,14 +222,50 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     };
   }, []);
 
+  // ESC key handler for the Akram page - opens HOME Menu overlay
+  // FIXED: Only show the HOME Menu, don't close the channel
+  React.useEffect(() => {
+    if (!isAkram || !akramPageVisible || closing) return undefined;
+    
+    const handleKeyDown = (e) => {
+      // Check for Escape key using multiple properties for cross-browser support
+      const isEscape = 
+        e.key === 'Escape' || 
+        e.keyCode === 27 || 
+        e.code === 'Escape';
+      
+      if (isEscape) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Toggle the HOME Menu overlay
+        setShowHomeMenu((prev) => !prev);
+      }
+    };
+    
+    // Use capture phase to ensure we catch the event
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [isAkram, akramPageVisible, closing]);
+
+  // Reset if the overlay happens to still be open when this tile/dialog
+  // closes, or when we're no longer actually on the Akram page.
+  React.useEffect(() => {
+    if (closing || !akramPageVisible) setShowHomeMenu(false);
+  }, [closing, akramPageVisible]);
+
+  // Handle ESC from the AkramPage component
+  const handleAkramEscape = React.useCallback(() => {
+    if (!closing && akramPageVisible) {
+      setShowHomeMenu((prev) => !prev);
+    }
+  }, [closing, akramPageVisible]);
+
   // Reset states when closing
   React.useEffect(() => {
     if (closing) {
       setShowStartVideo(false);
       setHasPlayedStart(false);
       setVideoLoaded(false);
-      // Don't reset akramPlayTrigger or akramAnimationPlayed here
-      // We want to keep the tree state when reopening
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
@@ -118,6 +286,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       } else {
         setAkramPlayTrigger(0);
         setAkramAnimationPlayed(false);
+        setAkramPageVisible(false);
+        setShowWipe(false);
       }
       if (videoRef.current) {
         videoRef.current.pause();
@@ -131,6 +301,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     if (isAkram) {
       setAkramPlayTrigger(0);
       setAkramAnimationPlayed(false);
+      setAkramPageVisible(false);
+      setShowWipe(false);
     }
   }, [isAkram]);
 
@@ -188,18 +360,36 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
   // Listen for when the Akram animation completes
   React.useEffect(() => {
-    // This will be called when akramPlayTrigger changes
-    // We need to detect when the animation has finished playing
-    // The animation takes about 4.8 seconds (6 nodes * 800ms)
     if (akramPlayTrigger > 0) {
-      // Set a timeout to mark the animation as played after it completes
-      const animationDuration = 6 * 800 + 1000; // 6 nodes * 800ms + extra for final celebration
+      // 6 nodes * 350ms delay + 600ms for final celebration = ~2.7 seconds
+      const animationDuration = 6 * 350 + 600;
       const timer = setTimeout(() => {
         setAkramAnimationPlayed(true);
       }, animationDuration);
       return () => clearTimeout(timer);
     }
   }, [akramPlayTrigger]);
+
+  // Once the skill tree finishes, kick off the Wii swoosh wipe. The page
+  // itself gets swapped in underneath once the wipe fully covers the
+  // screen (see handleWipeCovered), so the switch is hidden by the wipe
+  // rather than a plain crossfade.
+  React.useEffect(() => {
+    if (!akramAnimationPlayed) return;
+    // 200ms delay for a smooth transition
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) setShowWipe(true);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [akramAnimationPlayed]);
+
+  const handleWipeCovered = React.useCallback(() => {
+    if (isMountedRef.current) setAkramPageVisible(true);
+  }, []);
+
+  const handleWipeDone = React.useCallback(() => {
+    if (isMountedRef.current) setShowWipe(false);
+  }, []);
 
   // Opening animation
   React.useLayoutEffect(() => {
@@ -525,14 +715,42 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
           style={{
             position: 'absolute',
             top: 0,
-            bottom: 'clamp(64px, 13%, 104px)',
+            bottom: akramPageVisible ? 0 : 'clamp(64px, 13%, 104px)',
             left: 0,
             right: 0,
             overflow: 'hidden',
             background: '#eef0f2',
           }}
         >
-          <AkramExpandedArt playTrigger={akramPlayTrigger} />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: akramPageVisible ? 0 : 1,
+              pointerEvents: akramPageVisible ? 'none' : 'auto',
+              // The swap is hidden under the Wii wipe once it's active, so
+              // this only needs to be quick fallback, not the main effect.
+              transition: showWipe ? 'none' : 'opacity 350ms ease',
+            }}
+          >
+            <AkramExpandedArt playTrigger={akramPlayTrigger} />
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: akramPageVisible ? 1 : 0,
+              pointerEvents: akramPageVisible ? 'auto' : 'none',
+              transition: showWipe ? 'none' : 'opacity 350ms ease',
+            }}
+          >
+            {akramPageVisible && (
+              <AkramPage 
+                onGoBack={onRequestClose} 
+                onEscape={handleAkramEscape} 
+              />
+            )}
+          </div>
         </div>
       );
     }
@@ -610,7 +828,11 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
           </>
         )}
 
-        <div className="disc-channel-bottombar">
+        <div
+          className={`disc-channel-bottombar ${
+            isAkram && akramPageVisible ? "disc-channel-bottombar--hidden" : ""
+          }`}
+        >
           <button
             className="disc-channel-btn disc-channel-btn--menu"
             type="button"
@@ -637,7 +859,29 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             Start
           </button>
         </div>
+
+        {/* Covers the whole frame - including the bottom bar - so the bar
+            can disappear underneath it as we swap from the menu card to
+            the actual page, the same way the Wii Menu bar drops away once
+            a channel/game actually loads in. */}
+        {isAkram && (
+          <WiiWipeTransition
+            active={showWipe}
+            onCovered={handleWipeCovered}
+            onDone={handleWipeDone}
+          />
+        )}
       </div>
+
+      {showHomeMenu && (
+        <HomeMenuOverlay
+          onClose={() => setShowHomeMenu(false)}
+          onGoToMenu={() => {
+            setShowHomeMenu(false);
+            onRequestClose?.();
+          }}
+        />
+      )}
     </>
   );
 }
