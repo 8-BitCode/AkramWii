@@ -10,6 +10,8 @@ import portfolioStartMp4 from "./Assets/Portfoliopreviewstart.mp4";
 import { AkramExpandedArt } from "./Akramart";
 import AkramPage from "./Akrampage";
 import GraphicsPage from "./Graphicspage";
+import AboutMePage from "./Aboutmepage";
+import miiImg from "./Assets/Mii1.png";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
@@ -94,12 +96,7 @@ function WiiWipeTransition({ active, variant, onCovered, onDone }) {
   );
 }
 
-/* ---------- Camera-aperture transition (Graphics channel only) ----------
-   A distinct, photography-themed alternative to the disc-swoosh wipe used
-   everywhere else: an iris closes down to black like a camera shutter,
-   "clicks" with a flash, then reopens onto the gallery. Same three-stage
-   contract as WiiWipeTransition (active / onCovered / onDone) so it drops
-   straight into the existing show->covered->hold->out->done flow. */
+/* ---------- Camera-aperture transition (Graphics channel only) ---------- */
 const IRIS_IN_MS = 460;
 const IRIS_HOLD_MS = 200;
 const IRIS_OUT_MS = 460;
@@ -185,6 +182,125 @@ function CameraApertureTransition({ active, onCovered, onDone }) {
   );
 }
 
+/* ---------- Mii-scatter transition (About Me channel only) ---------- */
+const MII_POP_COLS = 30; 
+const MII_POP_ROWS = 30;
+const MII_POP_COUNT = MII_POP_COLS * MII_POP_ROWS; // 660 Miis - absolute dense grid coverage
+const MII_POP_STEP_IN = 1; 
+const MII_POP_STEP_OUT = 1;
+const MII_POP_DURATION_IN = 260;
+const MII_POP_DURATION_OUT = 220;
+const MII_POP_IN_MS = (MII_POP_COUNT - 1) * MII_POP_STEP_IN + MII_POP_DURATION_IN + 40;
+const MII_POP_HOLD_MS = 1000;
+const MII_POP_OUT_MS = (MII_POP_COUNT - 1) * MII_POP_STEP_OUT + MII_POP_DURATION_OUT + 40;
+
+function MiiPopulateTransition({ active, onCovered, onDone }) {
+  const [stage, setStage] = React.useState("idle");
+  const timeoutsRef = React.useRef([]);
+  const firedRef = React.useRef(false);
+
+  const miis = React.useMemo(() => {
+    const indices = Array.from({ length: MII_POP_COUNT }, (_, i) => i);
+    for (let i = MII_POP_COUNT - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    return Array.from({ length: MII_POP_COUNT }).map((_, i) => {
+      const orderIndex = indices.indexOf(i);
+      const col = i % MII_POP_COLS;
+      const row = Math.floor(i / MII_POP_COLS);
+
+      const baseX = (col / (MII_POP_COLS - 1)) * 112 - 6; 
+      const baseY = (row / (MII_POP_ROWS - 1)) * 112 - 6; 
+
+      const jitterX = (Math.random() - 0.5) * 5;
+      const jitterY = (Math.random() - 0.5) * 5;
+
+      return {
+        id: i,
+        x: baseX + jitterX,
+        y: baseY + jitterY,
+        rot: Math.round(Math.random() * 80 - 40),
+        scale: 1.1 + Math.random() * 0.7,
+        delayIn: orderIndex * MII_POP_STEP_IN,
+        delayOut: Math.round(orderIndex * MII_POP_STEP_OUT + Math.random() * 3),
+        bobDelay: Math.round(Math.random() * 900),
+        zIndex: orderIndex, 
+      };
+    }).sort((a, b) => a.zIndex - b.zIndex); 
+  }, []);
+
+  React.useEffect(() => {
+    if (!active || firedRef.current) return undefined;
+    firedRef.current = true;
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      onCovered?.();
+      onDone?.();
+      firedRef.current = false;
+      return undefined;
+    }
+
+    setStage("in");
+    timeoutsRef.current.push(
+      setTimeout(() => {
+        setStage("hold");
+        onCovered?.();
+      }, MII_POP_IN_MS),
+      setTimeout(() => setStage("out"), MII_POP_IN_MS + MII_POP_HOLD_MS),
+      setTimeout(() => {
+        setStage("idle");
+        firedRef.current = false;
+        onDone?.();
+      }, MII_POP_IN_MS + MII_POP_HOLD_MS + MII_POP_OUT_MS)
+    );
+
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
+  }, [active]);
+
+  if (stage === "idle") return null;
+
+  // Use persistent 'mii-pop--in' class behavior across both 'in' and 'hold' stages to avoid resets
+  const activeModifierClass = stage === "out" ? "mii-pop--out" : "mii-pop--in";
+
+  return (
+    <div className={`mii-pop ${activeModifierClass}`} aria-hidden="true">
+      <div className="mii-pop-backdrop" />
+      <div className="mii-pop-field">
+        {miis.map((m) => (
+          <img
+            key={m.id}
+            src={miiImg}
+            alt=""
+            draggable={false}
+            className="mii-pop-mii"
+            style={{
+              left: `${m.x}%`,
+              top: `${m.y}%`,
+              zIndex: m.zIndex,
+              "--rot": `${m.rot}deg`,
+              "--end-scale": m.scale,
+              "--delay-in": `${m.delayIn}ms`,
+              "--delay-out": `${m.delayOut}ms`,
+              "--bob-delay": `${m.bobDelay}ms`,
+              "--pop-duration-in": `${MII_POP_DURATION_IN}ms`,
+              "--pop-duration-out": `${MII_POP_DURATION_OUT}ms`,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HomeMenuOverlay({ onClose, onGoToMenu }) {
   React.useEffect(() => {
     const handleKeyDown = (e) => {
@@ -245,6 +361,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const [graphicsPageVisible, setGraphicsPageVisible] = React.useState(false);
   const [showGraphicsWipe, setShowGraphicsWipe] = React.useState(false);
   const graphicsTransitionStartedRef = React.useRef(false);
+  const [aboutMePageVisible, setAboutMePageVisible] = React.useState(false);
+  const [showAboutMeWipe, setShowAboutMeWipe] = React.useState(false);
+  const aboutMeTransitionStartedRef = React.useRef(false);
   const [showHomeMenu, setShowHomeMenu] = React.useState(false);
   const videoRef = React.useRef(null);
 
@@ -253,7 +372,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     []
   );
 
-  // Check which tile is being viewed
   const isPortfolio = tileIndex === 0;
   const isAboutMe = isMobilePortrait ? tileIndex === 1 : tileIndex === 3;
   const isGraphics = isMobilePortrait ? tileIndex === 2 : tileIndex === 6;
@@ -289,7 +407,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     return 'cover';
   };
 
-  // Cleanup on unmount
   React.useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -306,9 +423,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     };
   }, []);
 
-  // ESC key handler
   React.useEffect(() => {
-    const onSubPage = (isAkram && akramPageVisible) || (isGraphics && graphicsPageVisible);
+    const onSubPage = (isAkram && akramPageVisible) || (isGraphics && graphicsPageVisible) || (isAboutMe && aboutMePageVisible);
     if (!onSubPage || closing) return undefined;
     
     const handleKeyDown = (e) => {
@@ -326,12 +442,11 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [isAkram, akramPageVisible, isGraphics, graphicsPageVisible, closing]);
+  }, [isAkram, akramPageVisible, isGraphics, graphicsPageVisible, isAboutMe, aboutMePageVisible, closing]);
 
-  // Reset HOME Menu when closing
   React.useEffect(() => {
-    if (closing || (!akramPageVisible && !graphicsPageVisible)) setShowHomeMenu(false);
-  }, [closing, akramPageVisible, graphicsPageVisible]);
+    if (closing || (!akramPageVisible && !graphicsPageVisible && !aboutMePageVisible)) setShowHomeMenu(false);
+  }, [closing, akramPageVisible, graphicsPageVisible, aboutMePageVisible]);
 
   const handleAkramEscape = React.useCallback(() => {
     if (!closing && akramPageVisible) {
@@ -345,7 +460,12 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [closing, graphicsPageVisible]);
 
-  // Reset states when closing
+  const handleAboutMeEscape = React.useCallback(() => {
+    if (!closing && aboutMePageVisible) {
+      setShowHomeMenu((prev) => !prev);
+    }
+  }, [closing, aboutMePageVisible]);
+
   React.useEffect(() => {
     if (closing) {
       setShowStartVideo(false);
@@ -354,6 +474,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       setGraphicsPageVisible(false);
       setShowGraphicsWipe(false);
       graphicsTransitionStartedRef.current = false;
+      setAboutMePageVisible(false);
+      setShowAboutMeWipe(false);
+      aboutMeTransitionStartedRef.current = false;
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
@@ -361,7 +484,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [closing]);
 
-  // Reset states when tile changes
   React.useEffect(() => {
     if (isSpecialTile) {
       setShowStartVideo(false);
@@ -378,14 +500,18 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
         setShowGraphicsWipe(false);
         graphicsTransitionStartedRef.current = false;
       }
+      if (!isAboutMe) {
+        setAboutMePageVisible(false);
+        setShowAboutMeWipe(false);
+        aboutMeTransitionStartedRef.current = false;
+      }
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
       }
     }
-  }, [tileIndex, isAkram, isGraphics]);
+  }, [tileIndex, isAkram, isGraphics, isAboutMe]);
 
-  // Reset akram animation on mount
   React.useEffect(() => {
     if (isAkram) {
       setAkramPlayTrigger(0);
@@ -395,7 +521,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [isAkram]);
 
-  // Reset graphics page on mount
   React.useEffect(() => {
     if (isGraphics) {
       setGraphicsPageVisible(false);
@@ -404,7 +529,14 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [isGraphics]);
 
-  // Handle graphics video ending -> show wipe
+  React.useEffect(() => {
+    if (isAboutMe) {
+      setAboutMePageVisible(false);
+      setShowAboutMeWipe(false);
+      aboutMeTransitionStartedRef.current = false;
+    }
+  }, [isAboutMe]);
+
   React.useEffect(() => {
     if (!isGraphics || graphicsTransitionStartedRef.current) return undefined;
     if (!showStartVideo || !videoLoaded) return undefined;
@@ -432,7 +564,33 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     if (isMountedRef.current) setShowGraphicsWipe(false);
   }, []);
 
-  // Play video when loaded
+  React.useEffect(() => {
+    if (!isAboutMe || aboutMeTransitionStartedRef.current) return undefined;
+    if (!showStartVideo || !videoLoaded) return undefined;
+    const video = videoRef.current;
+    if (!video) return undefined;
+
+    const handleEnded = () => {
+      if (aboutMeTransitionStartedRef.current) return;
+      aboutMeTransitionStartedRef.current = true;
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) setShowAboutMeWipe(true);
+      }, 260);
+      return () => clearTimeout(timer);
+    };
+
+    video.addEventListener('ended', handleEnded);
+    return () => video.removeEventListener('ended', handleEnded);
+  }, [isAboutMe, showStartVideo, videoLoaded]);
+
+  const handleAboutMeWipeCovered = React.useCallback(() => {
+    if (isMountedRef.current) setAboutMePageVisible(true);
+  }, []);
+
+  const handleAboutMeWipeDone = React.useCallback(() => {
+    if (isMountedRef.current) setShowAboutMeWipe(false);
+  }, []);
+
   React.useEffect(() => {
     if (showStartVideo && videoRef.current && videoLoaded) {
       videoRef.current.currentTime = 0;
@@ -442,7 +600,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [showStartVideo, videoLoaded]);
 
-  // Preload video
   React.useEffect(() => {
     if (isSpecialTile && videoRef.current) {
       videoRef.current.preload = 'auto';
@@ -450,10 +607,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [isSpecialTile]);
 
-  // Monitor video time for other tiles (not graphics)
   React.useEffect(() => {
     const video = videoRef.current;
-    if (!video || !showStartVideo || !videoLoaded || isGraphics) return;
+    if (!video || !showStartVideo || !videoLoaded || isGraphics || isAboutMe) return;
 
     const handleTimeUpdate = () => {
       if (video.ended || (video.duration > 0 && video.currentTime >= video.duration - 0.1)) {
@@ -464,20 +620,18 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [showStartVideo, videoLoaded, isGraphics]);
+  }, [showStartVideo, videoLoaded, isGraphics, isAboutMe]);
 
-  // Check video state for other tiles
   React.useEffect(() => {
     const video = videoRef.current;
-    if (!video || !showStartVideo || !videoLoaded || isGraphics) return;
+    if (!video || !showStartVideo || !videoLoaded || isGraphics || isAboutMe) return;
     if (video.ended) {
       const duration = video.duration || 0;
       video.currentTime = Math.max(0, duration - 0.05);
       video.pause();
     }
-  }, [showStartVideo, videoLoaded, isGraphics]);
+  }, [showStartVideo, videoLoaded, isGraphics, isAboutMe]);
 
-  // Akram animation completion
   React.useEffect(() => {
     if (akramPlayTrigger > 0) {
       const animationDuration = 6 * 350 + 600;
@@ -488,7 +642,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [akramPlayTrigger]);
 
-  // Akram wipe trigger
   React.useEffect(() => {
     if (!akramAnimationPlayed) return;
     const timer = setTimeout(() => {
@@ -505,7 +658,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     if (isMountedRef.current) setShowWipe(false);
   }, []);
 
-  // Opening animation
   React.useLayoutEffect(() => {
     const el = frameRef.current;
     const backdrop = backdropRef.current;
@@ -566,7 +718,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     };
   }, [originRect]);
 
-  // Closing animation
   React.useEffect(() => {
     const el = frameRef.current;
     const backdrop = backdropRef.current;
@@ -667,7 +818,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   };
 
   const handleVideoEnded = () => {
-    if (videoRef.current && !isGraphics) {
+    if (videoRef.current && !isGraphics && !isAboutMe) {
       const duration = videoRef.current.duration || 0;
       videoRef.current.currentTime = Math.max(0, duration - 0.05);
       videoRef.current.pause();
@@ -691,7 +842,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const isStartEnabled = isSpecialTile && !isStartDisabled();
 
   const renderContent = () => {
-    if (isPortfolio || isAboutMe) {
+    if (isPortfolio) {
       return (
         <div 
           style={{ 
@@ -746,11 +897,89 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
           />
         </div>
       );
+    } else if (isAboutMe) {
+      return (
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 'clamp(64px, 13%, 104px)',
+              left: 0,
+              right: 0,
+              overflow: 'hidden',
+              background: '#000',
+              opacity: aboutMePageVisible ? 0 : 1,
+              pointerEvents: aboutMePageVisible ? 'none' : 'auto',
+              transition: showAboutMeWipe ? 'none' : 'opacity 350ms ease',
+            }}
+          >
+            <img
+              src={previewGif}
+              alt={tileLabel}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: objectFit,
+                display: 'block',
+                opacity: showStartVideo && videoLoaded ? 0 : 1,
+                transition: 'opacity 0.5s ease',
+                zIndex: 1,
+              }}
+            />
+            <video
+              ref={videoRef}
+              src={startVideo}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: objectFit,
+                display: 'block',
+                opacity: showStartVideo && videoLoaded ? 1 : 0,
+                transition: 'opacity 0.5s ease',
+                zIndex: 2,
+              }}
+              playsInline
+              muted={false}
+              controls={false}
+              loop={false}
+              autoPlay={false}
+              onLoadedData={handleVideoLoaded}
+              onEnded={handleVideoEnded}
+              preload="auto"
+            />
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: aboutMePageVisible ? 1 : 0,
+              pointerEvents: aboutMePageVisible ? 'auto' : 'none',
+              transition: showAboutMeWipe ? 'none' : 'opacity 350ms ease',
+            }}
+          >
+            {aboutMePageVisible && (
+              <AboutMePage onGoBack={onRequestClose} onEscape={handleAboutMeEscape} />
+            )}
+          </div>
+
+          <MiiPopulateTransition
+            active={showAboutMeWipe}
+            onCovered={handleAboutMeWipeCovered}
+            onDone={handleAboutMeWipeDone}
+          />
+        </div>
+      );
     } else if (isGraphics) {
-      // Graphics - shows the preview video, then transitions to the gallery
       return (
         <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-          {/* Preview content (visible before wipe) */}
           <div
             style={{
               position: "absolute",
@@ -810,7 +1039,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             </div>
           </div>
 
-          {/* Graphics Page (visible after wipe) */}
           <div
             style={{
               position: "absolute",
@@ -825,9 +1053,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             )}
           </div>
 
-          {/* Graphics transition - triggered when video ends. Distinct from
-              the disc-swoosh wipe used elsewhere: a camera-shutter iris,
-              in keeping with the photo-gallery destination. */}
           <CameraApertureTransition
             active={showGraphicsWipe}
             onCovered={handleGraphicsWipeCovered}
@@ -876,7 +1101,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             )}
           </div>
 
-          {/* Akram wipe transition */}
           <WiiWipeTransition
             active={showWipe}
             onCovered={handleWipeCovered}
@@ -960,7 +1184,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
         <div
           className={`disc-channel-bottombar ${
-            (isAkram && akramPageVisible) || (isGraphics && graphicsPageVisible) ? "disc-channel-bottombar--hidden" : ""
+            (isAkram && akramPageVisible) || (isGraphics && graphicsPageVisible) || (isAboutMe && aboutMePageVisible) ? "disc-channel-bottombar--hidden" : ""
           }`}
         >
           <button

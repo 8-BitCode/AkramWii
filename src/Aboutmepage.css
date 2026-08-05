@@ -1,0 +1,191 @@
+/* AboutMePage.css — About Me
+   Empty shell page for now, styled to match GraphicsPage's chrome.
+*/
+
+.about-me-page {
+  position: absolute;
+  inset: 0;
+  background: #eef0f2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ---------- Ambient background ---------- */
+.about-me-page-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.about-me-page-grid {
+  position: absolute;
+  inset: 0;
+  background-color: #eef0f2;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0, 0, 0, 0.05) 39px, rgba(0, 0, 0, 0.05) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0, 0, 0, 0.05) 39px, rgba(0, 0, 0, 0.05) 40px);
+  background-size: 100% 100%, 100% 100%;
+  background-position: center center;
+  background-repeat: repeat;
+}
+
+.about-me-page-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.035) 0px,
+    rgba(0, 0, 0, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+.about-me-page-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.12) 100%);
+}
+
+/* ---------- Header ---------- */
+.about-me-page-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(16px, 3vh, 26px) clamp(20px, 4vw, 40px);
+  flex-shrink: 0;
+  background: #f8f9fb;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.about-me-page-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 4px;
+  background: linear-gradient(90deg, #a7e8f2 0%, #4fc7de 45%, #2bb3cf 78%, #1c8fa8 100%);
+  box-shadow: 0 2px 10px rgba(53, 195, 219, 0.45);
+}
+
+.about-me-page-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.about-me-page-title {
+  margin: 0;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(20px, 3.2vw, 32px);
+  color: #3a3b3f;
+  letter-spacing: 0.3px;
+}
+
+.about-me-page-subtitle {
+  margin: 0;
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 1.5vw, 15px);
+  color: #7b7c83;
+}
+
+.about-me-page-esc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(233, 237, 241, 0.95) 100%);
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(11px, 1.2vw, 14px);
+  color: #4c4d51;
+  cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 1px rgba(53, 195, 219, 0.4);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.about-me-page-esc:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    0 6px 24px rgba(53, 195, 219, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(53, 195, 219, 0.6);
+}
+
+.about-me-page-esc:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.about-me-page-esc-key {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(53, 195, 219, 0.2);
+  border: 1.5px solid rgba(53, 195, 219, 0.4);
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-weight: 700;
+  color: #1a8a9a;
+}
+
+.about-me-page-esc-mobile-label {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  color: #4c4d51;
+}
+
+.about-me-page-esc-mobile-arrow {
+  width: 16px;
+  height: 16px;
+  color: #1a8a9a;
+}
+
+/* ---------- Body ---------- */
+.about-me-page-body {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 600px) {
+  .about-me-page-header {
+    padding: 14px 16px;
+  }
+
+  .about-me-page-title {
+    font-size: 20px;
+  }
+
+  .about-me-page-subtitle {
+    font-size: 11px;
+  }
+
+  .about-me-page-esc {
+    padding: 7px 12px 7px 14px;
+    gap: 6px;
+  }
+}

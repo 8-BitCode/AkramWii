@@ -855,6 +855,105 @@
   }
 }
 
+/* ---------- Mii-scatter transition (About Me channel only) ----------
+   A third distinct transition alongside the disc-swoosh and camera-iris
+   wipes above, built entirely out of the person's own Mii: a swarm of
+   bare Mii cutouts - no box, no background chip, just the Mii itself -
+   pop in one at a time at random spots across the screen, gradually
+   filling the whole thing up for the page swap. Holds with a loose,
+   unsynchronized bob (like a small crowd milling around), then the
+   Miis pop away again one by one to reveal the About Me page. */
+
+.mii-pop {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mii-pop--in .mii-pop-backdrop {
+  animation: miiPopBackdropIn 240ms ease-out both;
+}
+
+.mii-pop--hold .mii-pop-backdrop {
+  opacity: 1;
+}
+
+.mii-pop--out .mii-pop-backdrop {
+  animation: miiPopBackdropOut 320ms ease-in both;
+  animation-delay: calc(var(--pop-duration-out, 220ms) * 0.6);
+}
+
+@keyframes miiPopBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes miiPopBackdropOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.mii-pop-field {
+  position: absolute;
+  inset: 0;
+}
+
+/* Each Mii is placed at its own random left/top point and pops in and
+   out right there in place - no box, no shared axis, just a scatter of
+   bare cutouts filling the screen. */
+.mii-pop-mii {
+  position: absolute;
+  width: clamp(42px, 7vw, 78px);
+  height: auto;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(10, 40, 55, 0.35));
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0) rotate(var(--rot, 0deg));
+}
+
+.mii-pop--in .mii-pop-mii {
+  animation: miiScatterIn var(--pop-duration-in, 260ms) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--delay-in, 0ms);
+}
+
+.mii-pop--hold .mii-pop-mii {
+  opacity: 1;
+  animation: miiScatterBob 1000ms ease-in-out infinite;
+  animation-delay: var(--bob-delay, 0ms);
+}
+
+.mii-pop--out .mii-pop-mii {
+  animation: miiScatterOut var(--pop-duration-out, 220ms) cubic-bezier(0.5, 0, 0.4, 1) both;
+  animation-delay: var(--delay-out, 0ms);
+}
+
+@keyframes miiScatterIn {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(var(--rot, 0deg)); }
+  55%  { opacity: 1; transform: translate(-50%, -50%) scale(calc(var(--end-scale, 1) * 1.12)) rotate(0deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(var(--end-scale, 1)) rotate(0deg); }
+}
+
+@keyframes miiScatterOut {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(var(--end-scale, 1)) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(var(--rot, 0deg)); }
+}
+
+@keyframes miiScatterBob {
+  0%, 100% { transform: translate(-50%, -50%) scale(var(--end-scale, 1)) translateY(0); }
+  50%      { transform: translate(-50%, -50%) scale(var(--end-scale, 1)) translateY(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mii-pop {
+    display: none !important;
+  }
+}
+
 /* ---------- HOME Menu overlay ----------
    Brought up with Esc, sitting above the whole Disc Channel (frame,
    wipe, everything). Loosely modeled on the real Wii HOME Menu: a
