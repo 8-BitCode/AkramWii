@@ -9,23 +9,19 @@ import portfolioGif from "./Assets/Portfoliopreview.gif";
 import portfolioStartMp4 from "./Assets/Portfoliopreviewstart.mp4";
 import { AkramExpandedArt } from "./Akramart";
 import AkramPage from "./Akrampage";
+import GraphicsPage from "./graphicspage";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
 const TILE_RADIUS = "12% / 16%";
 
-/* ---------- Wii-style disc-swoosh wipe, played between the Akram
-   Experience's skill-tree animation and the actual page. A big
-   diagonal swoosh - same curve/gradient language as the Disc Channel
-   header - sweeps across the screen, fully covers it for a beat with
-   a soft flash and a scatter of sparks, then sweeps on off to reveal
-   the page underneath, like a channel loading into its content. ---------- */
+/* ---------- Wii-style disc-swoosh wipe ---------- */
 const WIPE_IN_MS = 460;
 const WIPE_HOLD_MS = 180;
 const WIPE_OUT_MS = 460;
 
-function WiiWipeTransition({ active, onCovered, onDone }) {
-  const [stage, setStage] = React.useState("idle"); // idle -> in -> hold -> out
+function WiiWipeTransition({ active, variant, onCovered, onDone }) {
+  const [stage, setStage] = React.useState("idle");
   const timeoutsRef = React.useRef([]);
   const firedRef = React.useRef(false);
 
@@ -78,7 +74,10 @@ function WiiWipeTransition({ active, onCovered, onDone }) {
   if (stage === "idle") return null;
 
   return (
-    <div className={`wii-wipe wii-wipe--${stage}`} aria-hidden="true">
+    <div
+      className={`wii-wipe wii-wipe--${stage} ${variant ? `wii-wipe--${variant}` : ""}`}
+      aria-hidden="true"
+    >
       <div className="wii-wipe-bar">
         <span className="wii-wipe-shine" />
         {stage !== "out" &&
@@ -95,11 +94,100 @@ function WiiWipeTransition({ active, onCovered, onDone }) {
   );
 }
 
+/* ---------- Camera-aperture transition (Graphics channel only) ----------
+   A distinct, photography-themed alternative to the disc-swoosh wipe used
+   everywhere else: an iris closes down to black like a camera shutter,
+   "clicks" with a flash, then reopens onto the gallery. Same three-stage
+   contract as WiiWipeTransition (active / onCovered / onDone) so it drops
+   straight into the existing show->covered->hold->out->done flow. */
+const IRIS_IN_MS = 460;
+const IRIS_HOLD_MS = 200;
+const IRIS_OUT_MS = 460;
+
+function CameraApertureTransition({ active, onCovered, onDone }) {
+  const [stage, setStage] = React.useState("idle");
+  const timeoutsRef = React.useRef([]);
+  const firedRef = React.useRef(false);
+  const idBase = React.useId ? React.useId() : "camera-iris";
+
+  React.useEffect(() => {
+    if (!active || firedRef.current) return undefined;
+    firedRef.current = true;
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      onCovered?.();
+      onDone?.();
+      firedRef.current = false;
+      return undefined;
+    }
+
+    setStage("in");
+    timeoutsRef.current.push(
+      setTimeout(() => {
+        setStage("hold");
+        onCovered?.();
+      }, IRIS_IN_MS),
+      setTimeout(() => setStage("out"), IRIS_IN_MS + IRIS_HOLD_MS),
+      setTimeout(() => {
+        setStage("idle");
+        firedRef.current = false;
+        onDone?.();
+      }, IRIS_IN_MS + IRIS_HOLD_MS + IRIS_OUT_MS)
+    );
+
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
+  }, [active]);
+
+  if (stage === "idle") return null;
+
+  const maskId = `${idBase}-mask`;
+  const fillId = `${idBase}-fill`;
+
+  return (
+    <div className={`camera-iris camera-iris--${stage}`} aria-hidden="true">
+      <svg className="camera-iris-svg">
+        <defs>
+          <radialGradient id={fillId} cx="50%" cy="50%" r="75%">
+            <stop offset="0%" stopColor="#1c232b" />
+            <stop offset="55%" stopColor="#12161c" />
+            <stop offset="100%" stopColor="#05070a" />
+          </radialGradient>
+          <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+            <rect x="0" y="0" width="100%" height="100%" fill="#ffffff" />
+            <circle className="camera-iris-hole" cx="50%" cy="50%" r="75%" fill="#000000" />
+          </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill={`url(#${fillId})`} mask={`url(#${maskId})`} />
+        <circle
+          className="camera-iris-hole camera-iris-ring"
+          cx="50%"
+          cy="50%"
+          r="75%"
+          fill="none"
+          stroke="#35c3db"
+          strokeWidth="2.5"
+        />
+      </svg>
+      <div className="camera-iris-blades" />
+      <div className="camera-iris-flash" />
+      <span className="camera-iris-corner camera-iris-corner--tl" />
+      <span className="camera-iris-corner camera-iris-corner--tr" />
+      <span className="camera-iris-corner camera-iris-corner--bl" />
+      <span className="camera-iris-corner camera-iris-corner--br" />
+    </div>
+  );
+}
+
 function HomeMenuOverlay({ onClose, onGoToMenu }) {
-  // Handle ESC key to close the overlay - works in all browsers
   React.useEffect(() => {
     const handleKeyDown = (e) => {
-      // Check for Escape key using multiple properties for cross-browser support
       const isEscape = 
         e.key === 'Escape' || 
         e.keyCode === 27 || 
@@ -112,7 +200,6 @@ function HomeMenuOverlay({ onClose, onGoToMenu }) {
       }
     };
     
-    // Use capture phase to ensure we catch the event
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [onClose]);
@@ -155,27 +242,24 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const [akramAnimationPlayed, setAkramAnimationPlayed] = React.useState(false);
   const [akramPageVisible, setAkramPageVisible] = React.useState(false);
   const [showWipe, setShowWipe] = React.useState(false);
+  const [graphicsPageVisible, setGraphicsPageVisible] = React.useState(false);
+  const [showGraphicsWipe, setShowGraphicsWipe] = React.useState(false);
+  const graphicsTransitionStartedRef = React.useRef(false);
   const [showHomeMenu, setShowHomeMenu] = React.useState(false);
   const videoRef = React.useRef(null);
 
-  // Prefer the value App already tracks (and updates on resize). Only
-  // compute it ourselves - once, not on every render - if it wasn't passed.
   const isMobilePortrait = isMobilePortraitProp ?? React.useMemo(
     () => window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches,
     []
   );
 
-  // Check which tile is being viewed - handle both desktop and mobile indices
-  const isPortfolio = tileIndex === 0; // Same on both desktop and mobile
-  // About Me: index 1 on mobile, index 3 on desktop
+  // Check which tile is being viewed
+  const isPortfolio = tileIndex === 0;
   const isAboutMe = isMobilePortrait ? tileIndex === 1 : tileIndex === 3;
-  // Graphics: index 2 on mobile, index 6 on desktop
   const isGraphics = isMobilePortrait ? tileIndex === 2 : tileIndex === 6;
-  // The Akram Experience: index 3 on mobile, index 10 on desktop
   const isAkram = isMobilePortrait ? tileIndex === 3 : tileIndex === 10;
   const isSpecialTile = isPortfolio || isAboutMe || isGraphics || isAkram;
 
-  // Get the appropriate preview GIF and start video based on tile
   const getPreviewGif = () => {
     if (isPortfolio) return portfolioGif;
     if (isAboutMe) return aboutMeGif;
@@ -222,13 +306,12 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     };
   }, []);
 
-  // ESC key handler for the Akram page - opens HOME Menu overlay
-  // FIXED: Only show the HOME Menu, don't close the channel
+  // ESC key handler
   React.useEffect(() => {
-    if (!isAkram || !akramPageVisible || closing) return undefined;
+    const onSubPage = (isAkram && akramPageVisible) || (isGraphics && graphicsPageVisible);
+    if (!onSubPage || closing) return undefined;
     
     const handleKeyDown = (e) => {
-      // Check for Escape key using multiple properties for cross-browser support
       const isEscape = 
         e.key === 'Escape' || 
         e.keyCode === 27 || 
@@ -237,28 +320,30 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       if (isEscape) {
         e.preventDefault();
         e.stopPropagation();
-        // Toggle the HOME Menu overlay
         setShowHomeMenu((prev) => !prev);
       }
     };
     
-    // Use capture phase to ensure we catch the event
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [isAkram, akramPageVisible, closing]);
+  }, [isAkram, akramPageVisible, isGraphics, graphicsPageVisible, closing]);
 
-  // Reset if the overlay happens to still be open when this tile/dialog
-  // closes, or when we're no longer actually on the Akram page.
+  // Reset HOME Menu when closing
   React.useEffect(() => {
-    if (closing || !akramPageVisible) setShowHomeMenu(false);
-  }, [closing, akramPageVisible]);
+    if (closing || (!akramPageVisible && !graphicsPageVisible)) setShowHomeMenu(false);
+  }, [closing, akramPageVisible, graphicsPageVisible]);
 
-  // Handle ESC from the AkramPage component
   const handleAkramEscape = React.useCallback(() => {
     if (!closing && akramPageVisible) {
       setShowHomeMenu((prev) => !prev);
     }
   }, [closing, akramPageVisible]);
+
+  const handleGraphicsEscape = React.useCallback(() => {
+    if (!closing && graphicsPageVisible) {
+      setShowHomeMenu((prev) => !prev);
+    }
+  }, [closing, graphicsPageVisible]);
 
   // Reset states when closing
   React.useEffect(() => {
@@ -266,6 +351,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       setShowStartVideo(false);
       setHasPlayedStart(false);
       setVideoLoaded(false);
+      setGraphicsPageVisible(false);
+      setShowGraphicsWipe(false);
+      graphicsTransitionStartedRef.current = false;
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
@@ -273,30 +361,31 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [closing]);
 
-  // Reset video when reopening (when tileIndex changes)
+  // Reset states when tile changes
   React.useEffect(() => {
     if (isSpecialTile) {
       setShowStartVideo(false);
       setHasPlayedStart(false);
       setVideoLoaded(false);
-      // Reset akram states when switching to a different tile
-      // but only if we're not already on the akram tile
-      if (isAkram) {
-        // Keep the animation state when reopening the same tile
-      } else {
+      if (!isAkram) {
         setAkramPlayTrigger(0);
         setAkramAnimationPlayed(false);
         setAkramPageVisible(false);
         setShowWipe(false);
+      }
+      if (!isGraphics) {
+        setGraphicsPageVisible(false);
+        setShowGraphicsWipe(false);
+        graphicsTransitionStartedRef.current = false;
       }
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
       }
     }
-  }, [tileIndex, isAkram]);
+  }, [tileIndex, isAkram, isGraphics]);
 
-  // Reset akram animation when the component mounts for the first time
+  // Reset akram animation on mount
   React.useEffect(() => {
     if (isAkram) {
       setAkramPlayTrigger(0);
@@ -306,10 +395,46 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [isAkram]);
 
-  // Play video when it becomes visible and loaded
+  // Reset graphics page on mount
+  React.useEffect(() => {
+    if (isGraphics) {
+      setGraphicsPageVisible(false);
+      setShowGraphicsWipe(false);
+      graphicsTransitionStartedRef.current = false;
+    }
+  }, [isGraphics]);
+
+  // Handle graphics video ending -> show wipe
+  React.useEffect(() => {
+    if (!isGraphics || graphicsTransitionStartedRef.current) return undefined;
+    if (!showStartVideo || !videoLoaded) return undefined;
+    const video = videoRef.current;
+    if (!video) return undefined;
+
+    const handleEnded = () => {
+      if (graphicsTransitionStartedRef.current) return;
+      graphicsTransitionStartedRef.current = true;
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) setShowGraphicsWipe(true);
+      }, 260);
+      return () => clearTimeout(timer);
+    };
+
+    video.addEventListener('ended', handleEnded);
+    return () => video.removeEventListener('ended', handleEnded);
+  }, [isGraphics, showStartVideo, videoLoaded]);
+
+  const handleGraphicsWipeCovered = React.useCallback(() => {
+    if (isMountedRef.current) setGraphicsPageVisible(true);
+  }, []);
+
+  const handleGraphicsWipeDone = React.useCallback(() => {
+    if (isMountedRef.current) setShowGraphicsWipe(false);
+  }, []);
+
+  // Play video when loaded
   React.useEffect(() => {
     if (showStartVideo && videoRef.current && videoLoaded) {
-      // Reset to beginning before playing
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(err => {
         console.warn('Video autoplay failed:', err);
@@ -317,7 +442,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [showStartVideo, videoLoaded]);
 
-  // Preload video when component mounts
+  // Preload video
   React.useEffect(() => {
     if (isSpecialTile && videoRef.current) {
       videoRef.current.preload = 'auto';
@@ -325,13 +450,12 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [isSpecialTile]);
 
-  // Monitor video time to keep it at the end
+  // Monitor video time for other tiles (not graphics)
   React.useEffect(() => {
     const video = videoRef.current;
-    if (!video || !showStartVideo || !videoLoaded) return;
+    if (!video || !showStartVideo || !videoLoaded || isGraphics) return;
 
     const handleTimeUpdate = () => {
-      // If video has ended or is near the end, keep it at the end
       if (video.ended || (video.duration > 0 && video.currentTime >= video.duration - 0.1)) {
         video.currentTime = Math.max(0, video.duration - 0.05);
         video.pause();
@@ -339,29 +463,23 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
-    
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-    };
-  }, [showStartVideo, videoLoaded]);
+    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [showStartVideo, videoLoaded, isGraphics]);
 
-  // Check when video state changes
+  // Check video state for other tiles
   React.useEffect(() => {
     const video = videoRef.current;
-    if (!video || !showStartVideo || !videoLoaded) return;
-
-    // Check if video is already ended when it becomes visible
+    if (!video || !showStartVideo || !videoLoaded || isGraphics) return;
     if (video.ended) {
       const duration = video.duration || 0;
       video.currentTime = Math.max(0, duration - 0.05);
       video.pause();
     }
-  }, [showStartVideo, videoLoaded]);
+  }, [showStartVideo, videoLoaded, isGraphics]);
 
-  // Listen for when the Akram animation completes
+  // Akram animation completion
   React.useEffect(() => {
     if (akramPlayTrigger > 0) {
-      // 6 nodes * 350ms delay + 600ms for final celebration = ~2.7 seconds
       const animationDuration = 6 * 350 + 600;
       const timer = setTimeout(() => {
         setAkramAnimationPlayed(true);
@@ -370,13 +488,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [akramPlayTrigger]);
 
-  // Once the skill tree finishes, kick off the Wii swoosh wipe. The page
-  // itself gets swapped in underneath once the wipe fully covers the
-  // screen (see handleWipeCovered), so the switch is hidden by the wipe
-  // rather than a plain crossfade.
+  // Akram wipe trigger
   React.useEffect(() => {
     if (!akramAnimationPlayed) return;
-    // 200ms delay for a smooth transition
     const timer = setTimeout(() => {
       if (isMountedRef.current) setShowWipe(true);
     }, 200);
@@ -399,7 +513,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
     isClosingRef.current = false;
 
-    // Reset styles and measure
     el.style.transition = "none";
     el.style.transform = "none";
     el.style.opacity = "1";
@@ -425,10 +538,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       backdrop.style.pointerEvents = "auto";
     }
 
-    // Force reflow
     void el.getBoundingClientRect();
 
-    // Animate in
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -455,7 +566,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     };
   }, [originRect]);
 
-  // Handle closing
+  // Closing animation
   React.useEffect(() => {
     const el = frameRef.current;
     const backdrop = backdropRef.current;
@@ -466,22 +577,18 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
     isClosingRef.current = true;
 
-    // Clean up any pending animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
 
-    // Disable pointer events immediately
     el.style.pointerEvents = "none";
     if (backdrop) {
       backdrop.style.pointerEvents = "none";
     }
 
-    // Force a reflow to ensure we measure correctly
     void el.getBoundingClientRect();
 
-    // Get current position
     const restRect = el.getBoundingClientRect();
 
     const scaleX = originRect.width / restRect.width;
@@ -489,10 +596,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     const translateX = originRect.left + originRect.width / 2 - (restRect.left + restRect.width / 2);
     const translateY = originRect.top + originRect.height / 2 - (restRect.top + restRect.height / 2);
 
-    // Force another reflow
     void el.getBoundingClientRect();
 
-    // Animate out
     animationFrameRef.current = requestAnimationFrame(() => {
       if (!isMountedRef.current) return;
       
@@ -507,7 +612,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       }
     });
 
-    // Call onClosed after animation completes
     const timeoutId = setTimeout(() => {
       if (!isMountedRef.current) return;
       
@@ -516,7 +620,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
         animationFrameRef.current = null;
       }
       
-      // Hide everything immediately before unmounting
       if (el) {
         el.style.display = "none";
         el.style.opacity = "0";
@@ -543,10 +646,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const handleStartClick = () => {
     if (closing || !isSpecialTile) return;
     if (isAkram) {
-      // Only increment if animation hasn't been played yet
       if (!akramAnimationPlayed) {
         setAkramPlayTrigger((t) => t + 1);
-        // The animation will start and set akramAnimationPlayed after it completes
       }
       return;
     }
@@ -557,7 +658,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
   const handleVideoLoaded = () => {
     setVideoLoaded(true);
-    // Reset to beginning and play immediately when loaded
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(err => {
@@ -567,8 +667,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   };
 
   const handleVideoEnded = () => {
-    // Keep the video at the end frame
-    if (videoRef.current) {
+    if (videoRef.current && !isGraphics) {
       const duration = videoRef.current.duration || 0;
       videoRef.current.currentTime = Math.max(0, duration - 0.05);
       videoRef.current.pause();
@@ -579,9 +678,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const startVideo = getStartVideo();
   const tileLabel = getTileLabel();
   const objectFit = getObjectFit();
-  const isGraphicsTile = isGraphics;
 
-  // Determine if Start button should be disabled
   const isStartDisabled = () => {
     if (closing) return true;
     if (!isSpecialTile) return true;
@@ -591,13 +688,10 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     return hasPlayedStart;
   };
 
-  // Check if Start button should be enabled
   const isStartEnabled = isSpecialTile && !isStartDisabled();
 
-  // Render content based on tile type
   const renderContent = () => {
     if (isPortfolio || isAboutMe) {
-      // Portfolio and About Me - no frame, just the image/video
       return (
         <div 
           style={{ 
@@ -653,60 +747,92 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
         </div>
       );
     } else if (isGraphics) {
-      // Graphics - with yellow background and black grid lines.
-      // All the decorative layers below used to be inline `style={{...}}`
-      // objects rebuilt from scratch on every render (a lot of gradient
-      // parsing work for content that never changes). They're now static
-      // CSS classes defined in DiscChannel.css, computed once by the
-      // browser instead of re-created by React every render.
+      // Graphics - shows the preview video, then transitions to the gallery
       return (
-        <div className="graphics-view">
-          <div className="graphics-grid-bg" />
+        <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+          {/* Preview content (visible before wipe) */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: graphicsPageVisible ? 0 : 1,
+              pointerEvents: graphicsPageVisible ? "none" : "auto",
+              transition: showGraphicsWipe ? "none" : "opacity 350ms ease",
+            }}
+          >
+            <div className="graphics-view">
+              <div className="graphics-grid-bg" />
 
-          <div className="graphics-frame-outer">
-            <div className="graphics-frame-inner">
-              <div className="graphics-frame-border-ring" />
-              <div className="graphics-frame-inner-shadow" />
-              <div className="graphics-frame-corner graphics-frame-corner--tl" />
-              <div className="graphics-frame-corner graphics-frame-corner--tr" />
-              <div className="graphics-frame-corner graphics-frame-corner--bl" />
-              <div className="graphics-frame-corner graphics-frame-corner--br" />
-              <div className="graphics-frame-glow" />
+              <div className="graphics-frame-outer">
+                <div className="graphics-frame-inner">
+                  <div className="graphics-frame-border-ring" />
+                  <div className="graphics-frame-inner-shadow" />
+                  <div className="graphics-frame-corner graphics-frame-corner--tl" />
+                  <div className="graphics-frame-corner graphics-frame-corner--tr" />
+                  <div className="graphics-frame-corner graphics-frame-corner--bl" />
+                  <div className="graphics-frame-corner graphics-frame-corner--br" />
+                  <div className="graphics-frame-glow" />
 
-              <div className="graphics-content">
-                <div className="graphics-content-glow" />
+                  <div className="graphics-content">
+                    <div className="graphics-content-glow" />
 
-                <img
-                  src={previewGif}
-                  alt={tileLabel}
-                  className="graphics-content-media"
-                  style={{
-                    objectFit: objectFit,
-                    opacity: showStartVideo && videoLoaded ? 0 : 1,
-                  }}
-                />
-                <video
-                  ref={videoRef}
-                  src={startVideo}
-                  className="graphics-content-media graphics-content-video"
-                  style={{
-                    objectFit: objectFit,
-                    opacity: showStartVideo && videoLoaded ? 1 : 0,
-                  }}
-                  playsInline
-                  muted={false}
-                  controls={false}
-                  loop={false}
-                  autoPlay={false}
-                  onLoadedData={handleVideoLoaded}
-                  onEnded={handleVideoEnded}
-                  preload="auto"
-                />
+                    <img
+                      src={previewGif}
+                      alt={tileLabel}
+                      className="graphics-content-media"
+                      style={{
+                        objectFit: objectFit,
+                        opacity: showStartVideo && videoLoaded ? 0 : 1,
+                      }}
+                    />
+                    <video
+                      ref={videoRef}
+                      src={startVideo}
+                      className="graphics-content-media graphics-content-video"
+                      style={{
+                        objectFit: objectFit,
+                        opacity: showStartVideo && videoLoaded ? 1 : 0,
+                      }}
+                      playsInline
+                      muted={false}
+                      controls={false}
+                      loop={false}
+                      autoPlay={false}
+                      onLoadedData={handleVideoLoaded}
+                      onEnded={handleVideoEnded}
+                      preload="auto"
+                    />
+                  </div>
+
+                  <div className="graphics-frame-outer-glow" />
+                </div>
               </div>
-
-              <div className="graphics-frame-outer-glow" />
             </div>
           </div>
+
+          {/* Graphics Page (visible after wipe) */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: graphicsPageVisible ? 1 : 0,
+              pointerEvents: graphicsPageVisible ? "auto" : "none",
+              transition: showGraphicsWipe ? "none" : "opacity 350ms ease",
+            }}
+          >
+            {graphicsPageVisible && (
+              <GraphicsPage onGoBack={onRequestClose} onEscape={handleGraphicsEscape} />
+            )}
+          </div>
+
+          {/* Graphics transition - triggered when video ends. Distinct from
+              the disc-swoosh wipe used elsewhere: a camera-shutter iris,
+              in keeping with the photo-gallery destination. */}
+          <CameraApertureTransition
+            active={showGraphicsWipe}
+            onCovered={handleGraphicsWipeCovered}
+            onDone={handleGraphicsWipeDone}
+          />
         </div>
       );
     } else if (isAkram) {
@@ -728,8 +854,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
               inset: 0,
               opacity: akramPageVisible ? 0 : 1,
               pointerEvents: akramPageVisible ? 'none' : 'auto',
-              // The swap is hidden under the Wii wipe once it's active, so
-              // this only needs to be quick fallback, not the main effect.
               transition: showWipe ? 'none' : 'opacity 350ms ease',
             }}
           >
@@ -751,6 +875,13 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
               />
             )}
           </div>
+
+          {/* Akram wipe transition */}
+          <WiiWipeTransition
+            active={showWipe}
+            onCovered={handleWipeCovered}
+            onDone={handleWipeDone}
+          />
         </div>
       );
     }
@@ -776,7 +907,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
         {isSpecialTile ? (
           renderContent()
         ) : (
-          // Regular Disc Channel content
           <>
             <div className="disc-channel-header">
               <svg
@@ -830,7 +960,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
         <div
           className={`disc-channel-bottombar ${
-            isAkram && akramPageVisible ? "disc-channel-bottombar--hidden" : ""
+            (isAkram && akramPageVisible) || (isGraphics && graphicsPageVisible) ? "disc-channel-bottombar--hidden" : ""
           }`}
         >
           <button
@@ -859,18 +989,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             Start
           </button>
         </div>
-
-        {/* Covers the whole frame - including the bottom bar - so the bar
-            can disappear underneath it as we swap from the menu card to
-            the actual page, the same way the Wii Menu bar drops away once
-            a channel/game actually loads in. */}
-        {isAkram && (
-          <WiiWipeTransition
-            active={showWipe}
-            onCovered={handleWipeCovered}
-            onDone={handleWipeDone}
-          />
-        )}
       </div>
 
       {showHomeMenu && (

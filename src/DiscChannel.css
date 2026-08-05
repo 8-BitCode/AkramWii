@@ -699,6 +699,162 @@
   }
 }
 
+/* ---------- Camera-aperture transition (Graphics channel only) ----------
+   A distinct, photography-themed alternative to the disc-swoosh wipe
+   above: an iris closes down to black like a camera shutter, "clicks"
+   with a flash, then reopens onto the gallery. Cyan glow and viewfinder
+   corner brackets keep it in the same Wii chrome family while giving the
+   Graphics channel its own signature moment. */
+
+.camera-iris {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.camera-iris-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.camera-iris-hole {
+  r: 75%;
+}
+
+.camera-iris--in .camera-iris-hole {
+  animation: cameraIrisClose 460ms cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+.camera-iris--hold .camera-iris-hole {
+  r: 0%;
+}
+
+.camera-iris--out .camera-iris-hole {
+  animation: cameraIrisOpen 460ms cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+
+@keyframes cameraIrisClose {
+  from { r: 75%; }
+  to   { r: 0%; }
+}
+
+@keyframes cameraIrisOpen {
+  from { r: 0%; }
+  to   { r: 75%; }
+}
+
+.camera-iris-ring {
+  filter: drop-shadow(0 0 6px rgba(53, 195, 219, 0.85));
+  opacity: 0.9;
+  transition: opacity 120ms ease;
+}
+
+.camera-iris--hold .camera-iris-ring {
+  opacity: 0;
+}
+
+/* Faint rotating blade texture for mechanical flavor, independent of
+   the exact hole radius at any given instant. */
+.camera-iris-blades {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.12) 0deg 4deg,
+    transparent 4deg 45deg
+  );
+  animation: cameraIrisBladesSpin 3.4s linear infinite;
+}
+
+@keyframes cameraIrisBladesSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* The camera "click" flash right as the aperture reaches full closure */
+.camera-iris-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+}
+
+.camera-iris--hold .camera-iris-flash {
+  animation: cameraIrisFlash 380ms ease-out both;
+}
+
+@keyframes cameraIrisFlash {
+  0%   { opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* Viewfinder focus brackets - same corner language as the Graphics
+   gallery thumbnails - flick on while the shutter is held closed, so
+   the transition itself previews the destination's visual grammar. */
+.camera-iris-corner {
+  position: absolute;
+  width: clamp(28px, 4vw, 54px);
+  height: clamp(28px, 4vw, 54px);
+  opacity: 0;
+  transition: opacity 200ms ease, transform 200ms ease;
+  filter: drop-shadow(0 0 8px rgba(53, 195, 219, 0.6));
+}
+
+.camera-iris--hold .camera-iris-corner {
+  opacity: 0.9;
+}
+
+.camera-iris-corner--tl {
+  top: clamp(18px, 4vh, 40px);
+  left: clamp(18px, 4vw, 40px);
+  border-top: 3px solid #35c3db;
+  border-left: 3px solid #35c3db;
+  transform: translate(10px, 10px);
+}
+.camera-iris--hold .camera-iris-corner--tl { transform: translate(0, 0); }
+
+.camera-iris-corner--tr {
+  top: clamp(18px, 4vh, 40px);
+  right: clamp(18px, 4vw, 40px);
+  border-top: 3px solid #35c3db;
+  border-right: 3px solid #35c3db;
+  transform: translate(-10px, 10px);
+}
+.camera-iris--hold .camera-iris-corner--tr { transform: translate(0, 0); }
+
+.camera-iris-corner--bl {
+  bottom: clamp(18px, 4vh, 40px);
+  left: clamp(18px, 4vw, 40px);
+  border-bottom: 3px solid #35c3db;
+  border-left: 3px solid #35c3db;
+  transform: translate(10px, -10px);
+}
+.camera-iris--hold .camera-iris-corner--bl { transform: translate(0, 0); }
+
+.camera-iris-corner--br {
+  bottom: clamp(18px, 4vh, 40px);
+  right: clamp(18px, 4vw, 40px);
+  border-bottom: 3px solid #35c3db;
+  border-right: 3px solid #35c3db;
+  transform: translate(-10px, -10px);
+}
+.camera-iris--hold .camera-iris-corner--br { transform: translate(0, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-iris {
+    display: none !important;
+  }
+}
+
 /* ---------- HOME Menu overlay ----------
    Brought up with Esc, sitting above the whole Disc Channel (frame,
    wipe, everything). Loosely modeled on the real Wii HOME Menu: a

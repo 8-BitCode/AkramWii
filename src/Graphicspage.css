@@ -1,0 +1,600 @@
+/* GraphicsPage.css — Photo Channel
+   One graphic on screen at a time. The bottom preview is now a 
+   continuous, spinning 3D carousel track!
+*/
+
+.graphics-page {
+  position: absolute;
+  inset: 0;
+  background: #f5d742;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ---------- Ambient background ---------- */
+.graphics-page-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.graphics-page-grid {
+  position: absolute;
+  inset: 0;
+  background-color: #f5d742;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0, 0, 0, 0.3) 39px, rgba(0, 0, 0, 0.3) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0, 0, 0, 0.3) 39px, rgba(0, 0, 0, 0.3) 40px),
+    repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(0, 0, 0, 0.08) 80px, rgba(0, 0, 0, 0.08) 81px),
+    repeating-linear-gradient(-45deg, transparent, transparent 80px, rgba(0, 0, 0, 0.08) 80px, rgba(0, 0, 0, 0.08) 81px),
+    radial-gradient(circle at 20px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 60px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 100px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 140px 20px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 20px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 60px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 100px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    radial-gradient(circle at 140px 60px, rgba(0, 0, 0, 0.25) 2px, transparent 2px);
+  background-size:
+    100% 100%, 100% 100%, 160px 160px, 160px 160px,
+    200px 200px, 200px 200px, 200px 200px, 200px 200px,
+    200px 200px, 200px 200px, 200px 200px, 200px 200px;
+  background-position: center center;
+  background-repeat: repeat;
+}
+
+.graphics-page-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.035) 0px,
+    rgba(0, 0, 0, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+.graphics-page-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.12) 100%);
+}
+
+/* ---------- Header ---------- */
+.graphics-page-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(16px, 3vh, 26px) clamp(20px, 4vw, 40px);
+  flex-shrink: 0;
+  background: #f8f9fb;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.graphics-page-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 4px;
+  background: linear-gradient(90deg, #a7e8f2 0%, #4fc7de 45%, #2bb3cf 78%, #1c8fa8 100%);
+  box-shadow: 0 2px 10px rgba(53, 195, 219, 0.45);
+}
+
+.graphics-page-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.graphics-page-title {
+  margin: 0;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(20px, 3.2vw, 32px);
+  color: #3a3b3f;
+  letter-spacing: 0.3px;
+}
+
+.graphics-page-subtitle {
+  margin: 0;
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 1.5vw, 15px);
+  color: #7b7c83;
+}
+
+.graphics-page-esc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(233, 237, 241, 0.95) 100%);
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(11px, 1.2vw, 14px);
+  color: #4c4d51;
+  cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 1px rgba(53, 195, 219, 0.4);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.graphics-page-esc:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    0 6px 24px rgba(53, 195, 219, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(53, 195, 219, 0.6);
+}
+
+.graphics-page-esc:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.graphics-page-esc-key {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(53, 195, 219, 0.2);
+  border: 1.5px solid rgba(53, 195, 219, 0.4);
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-weight: 700;
+  color: #1a8a9a;
+}
+
+.graphics-page-esc-mobile-label {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  color: #4c4d51;
+}
+
+.graphics-page-esc-mobile-arrow {
+  width: 16px;
+  height: 16px;
+  color: #1a8a9a;
+}
+
+/* ---------- The stage ---------- */
+.photo-stage {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: clamp(32px, 6vh, 56px) clamp(64px, 9vw, 120px);
+  overflow: visible;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: clamp(44px, 5.5vw, 64px);
+  height: clamp(44px, 5.5vw, 64px);
+  border: none;
+  appearance: none;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(233, 237, 241, 0.95) 100%);
+  color: #1a8a9a;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 2.5px rgba(53, 195, 219, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photo-nav-arrow svg {
+  width: 42%;
+  height: 42%;
+  fill: currentColor;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.photo-nav-arrow--left {
+  left: clamp(6px, 1.5vw, 20px);
+}
+.photo-nav-arrow--left svg {
+  margin-right: 2px;
+}
+
+.photo-nav-arrow--right {
+  right: clamp(6px, 1.5vw, 20px);
+}
+.photo-nav-arrow--right svg {
+  margin-left: 2px;
+}
+
+.photo-nav-arrow:hover {
+  transform: translateY(-50%) scale(1.08);
+  box-shadow:
+    0 6px 24px rgba(53, 195, 219, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 2.5px rgba(53, 195, 219, 0.6);
+}
+
+.photo-nav-arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+/* ---------- The frame ---------- */
+.photo-drag-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-frame {
+  position: relative;
+  padding: clamp(10px, 1.6vw, 18px);
+  border-radius: 16px;
+  background: linear-gradient(160deg, #f8f9fb 0%, #e2e4e8 40%, #d0d3d8 100%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.18),
+    0 22px 50px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@keyframes photoEnterFromRight {
+  from { transform: translateX(52px) scale(0.95); opacity: 0; }
+  to   { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+@keyframes photoEnterFromLeft {
+  from { transform: translateX(-52px) scale(0.95); opacity: 0; }
+  to   { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.photo-frame--enter-next {
+  animation: photoEnterFromRight 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.photo-frame--enter-prev {
+  animation: photoEnterFromLeft 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.photo-frame-corner {
+  position: absolute;
+  width: clamp(18px, 2.4vw, 28px);
+  height: clamp(18px, 2.4vw, 28px);
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(53, 195, 219, 0.35));
+}
+
+.photo-frame-corner--tl {
+  top: 4px; left: 4px;
+  border-top: 3px solid #35c3db;
+  border-left: 3px solid #35c3db;
+  border-radius: 6px 0 0 0;
+}
+
+.photo-frame-corner--tr {
+  top: 4px; right: 4px;
+  border-top: 3px solid #35c3db;
+  border-right: 3px solid #35c3db;
+  border-radius: 0 6px 0 0;
+}
+
+.photo-frame-corner--bl {
+  bottom: 4px; left: 4px;
+  border-bottom: 3px solid #35c3db;
+  border-left: 3px solid #35c3db;
+  border-radius: 0 0 0 6px;
+}
+
+.photo-frame-corner--br {
+  bottom: 4px; right: 4px;
+  border-bottom: 3px solid #35c3db;
+  border-right: 3px solid #35c3db;
+  border-radius: 0 0 6px 0;
+}
+
+.photo-frame-mat {
+  position: relative;
+  display: flex;
+  background: #ffffff;
+  padding: clamp(10px, 1.4vw, 16px);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.photo-frame-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.photo-frame-media {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(64vw, 760px);
+  max-height: min(45vh, 480px);
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+
+/* ---------- First-time swipe hint ---------- */
+.photo-swipe-hint {
+  position: absolute;
+  bottom: clamp(6px, 1.5vh, 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(20, 22, 26, 0.6);
+  animation: photoHintFade 4.2s ease-out both;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-swipe-hint span {
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(11px, 1.4vw, 13px);
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.5px;
+}
+
+@keyframes photoHintFade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  12% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- Caption ---------- */
+.photo-caption {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  padding: 0 clamp(16px, 4vw, 40px) clamp(10px, 1.6vh, 16px);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-caption-title {
+  margin: 0;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(16px, 2.2vw, 21px);
+  color: #3a3b3f;
+}
+
+.photo-caption-desc {
+  margin: 0;
+  max-width: 520px;
+  font-family: "WiiMedium", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 1.5vw, 14px);
+  line-height: 1.5;
+  color: #6f7175;
+}
+
+/* ---------- 3D Wheel Container ---------- */
+.photo-wheel-container {
+  --wheel-radius: clamp(140px, 22vw, 250px);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  height: clamp(100px, 15vh, 140px); /* Slightly increased height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 20px; /* Gives space for items tilting backward */
+  padding-bottom: clamp(6px, 1vh, 12px);
+  overflow: visible; /* Changed from hidden to prevent top cropping */
+  touch-action: pan-y;
+  cursor: grab;
+  perspective: 1200px;
+  mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-wheel-container:active {
+  cursor: grabbing;
+}
+
+.photo-wheel-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-wheel-item {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  margin: auto;
+  z-index: 5;
+  width: clamp(70px, 10vw, 100px);
+  aspect-ratio: 4/3;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photo-wheel-item-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: clamp(3px, 0.5vw, 5px);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-wheel-item:hover .photo-wheel-item-inner {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+}
+
+.photo-wheel-item.is-active .photo-wheel-item-inner {
+  border-color: #35c3db;
+  box-shadow: 
+    0 0 12px rgba(53, 195, 219, 0.65),
+    0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.photo-wheel-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* ---------- Mobile & Responsiveness ---------- */
+@media (max-width: 600px) {
+  .graphics-page-header {
+    padding: 14px 16px;
+  }
+
+  .graphics-page-title {
+    font-size: 20px;
+  }
+
+  .graphics-page-subtitle {
+    font-size: 11px;
+  }
+
+  .graphics-page-esc {
+    padding: 7px 12px 7px 14px;
+    gap: 6px;
+  }
+
+  .photo-stage {
+    padding: 32px clamp(40px, 12vw, 56px);
+  }
+
+  .photo-nav-arrow {
+    width: 42px;
+    height: 42px;
+  }
+
+  .photo-nav-arrow--left {
+    left: clamp(2px, 1vw, 10px);
+  }
+  .photo-nav-arrow--right {
+    right: clamp(2px, 1vw, 10px);
+  }
+
+  .photo-frame-media {
+    max-width: 72vw;
+    max-height: 40vh;
+  }
+
+  .photo-caption {
+    padding: 0 16px 8px;
+  }
+
+  .photo-caption-desc {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .photo-nav-arrow {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .photo-stage {
+    padding: 28px clamp(24px, 8vw, 40px);
+  }
+}
+
+/* ---------- Reduce motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .photo-frame--enter-next,
+  .photo-frame--enter-prev,
+  .photo-swipe-hint,
+  .photo-wheel-track {
+    animation: none !important;
+    transition: none !important;
+  }
+  .photo-frame {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
