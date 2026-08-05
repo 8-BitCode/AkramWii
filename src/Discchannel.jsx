@@ -9,7 +9,7 @@ import portfolioGif from "./Assets/Portfoliopreview.gif";
 import portfolioStartMp4 from "./Assets/Portfoliopreviewstart.mp4";
 import { AkramExpandedArt } from "./Akramart";
 import AkramPage from "./Akrampage";
-import GraphicsPage from "./graphicspage";
+import GraphicsPage from "./Graphicspage";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";

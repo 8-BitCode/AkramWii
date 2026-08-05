@@ -4,11 +4,11 @@
    Spin the bottom 3D wheel like a DJ turntable to browse the carousel!
 */
 import React from "react";
-import "./GraphicsPage.css";
+import "./Graphicspage.css";
 
 const GRAPHICS_DATA = [
   { id: 1, title: "Unics Game Jam", ext: "jpg" },
-  { id: 2, title: "Portfolio Website Workshop", ext: "gif" },
+  { id: 2, title: "Dev lead Portfolio Website Workshop", ext: "gif" },
   { id: 3, title: "ASCII Computer Hoodie Design", ext: "png", bg: "#000000" },
   { id: 4, title: "Bowling Social", ext: "png" },
   { id: 5, title: "Game Development Workshop", ext: "gif" },
