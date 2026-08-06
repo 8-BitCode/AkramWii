@@ -1,7 +1,7 @@
 /* GraphicsPage.jsx
    Photo Channel — one graphic on screen at a time, framed in a chrome bezel.
    Swipe left/right on the main photo to change it. 
-   Spin the bottom 3D wheel like a DJ turntable to browse the carousel!
+   Spin the bottom 3D wheel with full multi-rotation momentum like a turntable!
 */
 import React from "react";
 import "./Graphicspage.css";
@@ -69,8 +69,29 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
     startX: 0, 
     startY: 0,
     pointerId: null, 
-    target: null 
+    target: null,
+    lastX: 0,
+    lastTime: 0,
+    velocity: 0
   });
+
+  const animationFrameRef = React.useRef(null);
+  const currentAngleRef = React.useRef(0);
+
+  // Keep track of current base angle to sync smoothly with absoluteIndex state changes
+  React.useEffect(() => {
+    if (!dragState.current.dragging) {
+      currentAngleRef.current = -absoluteIndex * theta;
+      if (wheelDragRef.current) {
+        wheelDragRef.current.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1)';
+        wheelDragRef.current.style.transform = `
+          translateZ(calc(-1 * var(--wheel-radius))) 
+          rotateX(8deg) 
+          rotateY(${currentAngleRef.current}deg)
+        `;
+      }
+    }
+  }, [absoluteIndex, theta]);
 
   const data = GRAPHICS_DATA[index];
   const assetPath = getAssetPath(data.id, data.ext);
@@ -130,13 +151,22 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
 
   const handlePointerDown = (target) => (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    
+    // Cancel any ongoing momentum animation
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
     dragState.current = { 
       dragging: true, 
       hasMoved: false, 
       startX: e.clientX, 
       startY: e.clientY,
       pointerId: e.pointerId, 
-      target 
+      target,
+      lastX: e.clientX,
+      lastTime: performance.now(),
+      velocity: 0
     };
     
     if (target === 'main' && dragRef.current) {
@@ -160,18 +190,28 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
       st.hasMoved = true;
     }
 
+    // Calculate instantaneous velocity for momentum throwing
+    const now = performance.now();
+    const dt = now - st.lastTime;
+    if (dt > 0) {
+      const dx = e.clientX - st.lastX;
+      st.velocity = dx / dt; // pixels per millisecond
+      st.lastX = e.clientX;
+      st.lastTime = now;
+    }
+
     if (st.target === 'main' && dragRef.current) {
       dragRef.current.style.transform = `translateX(${rawDelta * DRAG_RESISTANCE}px)`;
     }
     
     if (st.target === 'wheel' && wheelDragRef.current) {
-      const dragAngle = rawDelta * 0.4;
-      const currentBaseAngle = -absoluteIndex * theta;
+      const dragAngle = rawDelta * 0.5;
+      currentAngleRef.current = (-absoluteIndex * theta) + dragAngle;
       
       wheelDragRef.current.style.transform = `
         translateZ(calc(-1 * var(--wheel-radius))) 
         rotateX(8deg) 
-        rotateY(${currentBaseAngle + dragAngle}deg)
+        rotateY(${currentAngleRef.current}deg)
       `;
     }
   };
@@ -189,24 +229,74 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
       else if (rawDelta >= SWIPE_THRESHOLD) goPrev();
     } 
     else if (st.target === 'wheel') {
-      const dragAngle = rawDelta * 0.4;
-      const finalAngle = (-absoluteIndex * theta) + dragAngle;
+      // Convert pointer velocity to angular momentum velocity (degrees per frame)
+      let angularVelocity = st.velocity * 16.67 * 0.6; 
       
-      const nearestAbsIndex = Math.round(-finalAngle / theta);
-      
-      if (wheelDragRef.current) {
-        wheelDragRef.current.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1)';
-        wheelDragRef.current.style.transform = `
-          translateZ(calc(-1 * var(--wheel-radius))) 
-          rotateX(8deg) 
-          rotateY(${-nearestAbsIndex * theta}deg)
-        `;
+      // If user barely moved or clicked without dragging, snap to nearest item
+      if (!st.hasMoved || Math.abs(angularVelocity) < 0.5) {
+        const nearestAbsIndex = Math.round(-currentAngleRef.current / theta);
+        if (nearestAbsIndex !== absoluteIndex) {
+          setDirection(nearestAbsIndex > absoluteIndex ? 'next' : 'prev');
+          setAbsoluteIndex(nearestAbsIndex);
+        } else {
+          currentAngleRef.current = -absoluteIndex * theta;
+          if (wheelDragRef.current) {
+            wheelDragRef.current.style.transition = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1)';
+            wheelDragRef.current.style.transform = `
+              translateZ(calc(-1 * var(--wheel-radius))) 
+              rotateX(8deg) 
+              rotateY(${currentAngleRef.current}deg)
+            `;
+          }
+        }
+        return;
       }
 
-      if (nearestAbsIndex !== absoluteIndex) {
-        setDirection(nearestAbsIndex > absoluteIndex ? 'next' : 'prev');
-        setAbsoluteIndex(nearestAbsIndex);
-      }
+      // Run Momentum Gliding & Spin Loop
+      let lastFrameTime = performance.now();
+
+      const momentumStep = (time) => {
+        const dt = time - lastFrameTime;
+        lastFrameTime = time;
+
+        // Apply velocity to angle (adds momentum rotation around the track)
+        currentAngleRef.current += angularVelocity * (dt / 16.67);
+
+        // Apply friction decay (0.92 allows it to glide a good while before stopping)
+        angularVelocity *= Math.pow(0.92, dt / 16.67);
+
+        if (wheelDragRef.current) {
+          wheelDragRef.current.style.transform = `
+            translateZ(calc(-1 * var(--wheel-radius))) 
+            rotateX(8deg) 
+            rotateY(${currentAngleRef.current}deg)
+          `;
+        }
+
+        // Keep spinning until momentum decays completely
+        if (Math.abs(angularVelocity) > 0.08) {
+          animationFrameRef.current = requestAnimationFrame(momentumStep);
+        } else {
+          // Once it slows down, gently snap to the nearest card center
+          const nearestAbsIndex = Math.round(-currentAngleRef.current / theta);
+          
+          if (wheelDragRef.current) {
+            wheelDragRef.current.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1)';
+            wheelDragRef.current.style.transform = `
+              translateZ(calc(-1 * var(--wheel-radius))) 
+              rotateX(8deg) 
+              rotateY(${-nearestAbsIndex * theta}deg)
+            `;
+          }
+
+          if (nearestAbsIndex !== absoluteIndex) {
+            setDirection(nearestAbsIndex > absoluteIndex ? 'next' : 'prev');
+            setAbsoluteIndex(nearestAbsIndex);
+          }
+        }
+      };
+
+      animationFrameRef.current = requestAnimationFrame(momentumStep);
     }
   };
 
