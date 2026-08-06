@@ -248,8 +248,7 @@ const GlobeMesh = ({ nodes, activeFactIndex, setActiveFactIndex, isMobile }) => 
   const globeRef = useRef();
   const sphereRef = useRef();
 
-  // Smaller desktop radius so it fits layout without vertical scrolling
-  const globeRadius = isMobile ? 0.85 : 1.05;
+  const globeRadius = isMobile ? 0.95 : 1.05;
 
   const { colorMap, bumpMap } = useMemo(() => createBrainTextures(), []);
   const brainGeometry = useMemo(() => createBrainGeometry(globeRadius), [globeRadius]);
@@ -279,7 +278,7 @@ const GlobeMesh = ({ nodes, activeFactIndex, setActiveFactIndex, isMobile }) => 
         const isActive = activeFactIndex === idx;
         
         return (
-          <Html key={idx} position={position} center occlude={[sphereRef]}>
+          <Html key={idx} position={position} center>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {isActive && <div className="marker-pulse-ring" />}
               <div
@@ -448,9 +447,27 @@ export default function AboutMePage({ onGoBack, onEscape }) {
           <h1 className="about-me-page-title">About Me</h1>
           <p className="about-me-page-subtitle">Akram Munir Awel</p>
         </div>
-        <button className="about-me-page-esc" onClick={onEscape}>
+        <button
+          className="about-me-page-esc"
+          onClick={onEscape}
+          aria-label={isMobile ? "Open Menu" : "Press ESC to open HOME Menu"}
+        >
           {isMobile ? (
-            <span className="about-me-page-esc-mobile-label">Menu</span>
+            <>
+              <span className="about-me-page-esc-mobile-label">Menu</span>
+              <svg
+                className="about-me-page-esc-mobile-arrow"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 6 15 12 9 18" />
+              </svg>
+            </>
           ) : (
             <>
               <span className="about-me-page-esc-key">⎋ ESC</span>
