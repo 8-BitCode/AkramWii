@@ -78,6 +78,23 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
   const animationFrameRef = React.useRef(null);
   const currentAngleRef = React.useRef(0);
 
+  // Helper to extract the live rotation angle from the active DOM transform matrix during mid-animation interruptions
+  const getLiveRotationY = (element) => {
+    if (!element) return currentAngleRef.current;
+    const style = window.getComputedStyle(element);
+    const matrix = style.transform || style.webkitTransform;
+    if (matrix && matrix !== 'none') {
+      const values = matrix.split('(')[1].split(')')[0].split(',');
+      if (values.length >= 6) {
+        const a = parseFloat(values[0]);
+        const b = parseFloat(values[1]);
+        const angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+        return angle;
+      }
+    }
+    return currentAngleRef.current;
+  };
+
   // Keep track of current base angle to sync smoothly with absoluteIndex state changes
   React.useEffect(() => {
     if (!dragState.current.dragging) {
@@ -157,6 +174,12 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
       cancelAnimationFrame(animationFrameRef.current);
     }
 
+    // If grabbing the wheel while it's mid-animation, capture its exact live coordinate offset
+    if (target === 'wheel' && wheelDragRef.current) {
+      currentAngleRef.current = getLiveRotationY(wheelDragRef.current);
+      wheelDragRef.current.style.transition = 'none';
+    }
+
     dragState.current = { 
       dragging: true, 
       hasMoved: false, 
@@ -171,9 +194,6 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
     
     if (target === 'main' && dragRef.current) {
       dragRef.current.style.transition = 'none';
-    }
-    if (target === 'wheel' && wheelDragRef.current) {
-      wheelDragRef.current.style.transition = 'none';
     }
     
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -206,12 +226,12 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
     
     if (st.target === 'wheel' && wheelDragRef.current) {
       const dragAngle = rawDelta * 0.5;
-      currentAngleRef.current = (-absoluteIndex * theta) + dragAngle;
+      const trackingAngle = currentAngleRef.current + dragAngle;
       
       wheelDragRef.current.style.transform = `
         translateZ(calc(-1 * var(--wheel-radius))) 
         rotateX(8deg) 
-        rotateY(${currentAngleRef.current}deg)
+        rotateY(${trackingAngle}deg)
       `;
     }
   };
@@ -229,6 +249,9 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
       else if (rawDelta >= SWIPE_THRESHOLD) goPrev();
     } 
     else if (st.target === 'wheel') {
+      // Update the base angle baseline with the final dragged offset before launching momentum
+      currentAngleRef.current += rawDelta * 0.5;
+
       // Convert pointer velocity to angular momentum velocity (degrees per frame)
       let angularVelocity = st.velocity * 16.67 * 0.6; 
       

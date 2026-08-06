@@ -137,18 +137,43 @@
   font-size: clamp(11px, 1.2vw, 14px);
   color: #4c4d51;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 0 0 1px rgba(53, 195, 219, 0.4);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 1px rgba(53, 195, 219, 0.4);
   transition: all 0.25s ease;
   flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .about-me-page-esc:hover {
   transform: translateY(-1px) scale(1.03);
-  box-shadow: 0 6px 24px rgba(53, 195, 219, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(53, 195, 219, 0.6);
+  box-shadow:
+    0 6px 24px rgba(53, 195, 219, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(53, 195, 219, 0.6);
 }
 
 .about-me-page-esc:active {
   transform: translateY(0) scale(0.98);
+}
+
+.about-me-page-esc-key {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(53, 195, 219, 0.2);
+  border: 1.5px solid rgba(53, 195, 219, 0.4);
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-weight: 700;
+  color: #1a8a9a;
+}
+
+.about-me-page-esc-mobile-label {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  color: #4c4d51;
 }
 
 /* ---------- Body & Layout ---------- */
