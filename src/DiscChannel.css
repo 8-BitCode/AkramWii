@@ -58,8 +58,6 @@
   animation-iteration-count: infinite;
 }
 
-/* Rotating specular highlight so each sphere reads as tumbling in 3D,
-   independent of its flight path animation. */
 .graphics-orb::after {
   content: "";
   position: absolute;
@@ -78,10 +76,6 @@
   to { transform: rotate(360deg) translateX(6%) rotate(-360deg); }
 }
 
-/* Five distinct 3D drift paths - real translateZ + rotation, so combined
-   with the perspective set on .graphics-orbs' parent, balls genuinely
-   grow/shrink as they move toward/away from camera rather than faking
-   depth with opacity or blur. */
 .graphics-orb--a { animation-name: graphics-orb-path-a; }
 .graphics-orb--b { animation-name: graphics-orb-path-b; }
 .graphics-orb--c { animation-name: graphics-orb-path-c; }
@@ -269,11 +263,6 @@
   transition: opacity 260ms ease, transform 260ms ease;
 }
 
-/* Once you've actually landed on the Akram page - not just the menu
-   card leading to it - the Wii Menu chrome drops away, same as the
-   bottom bar disappearing once you're inside a real channel/game. It's
-   hidden while the wipe still covers the screen, so it's never seen
-   mid-slide. */
 .disc-channel-bottombar--hidden {
   opacity: 0;
   transform: translateY(100%);
@@ -514,9 +503,6 @@
   filter: blur(8px);
 }
 
-/* ---------- Graphics channel grid lines fade-in ---------- */
-
-/* The grid lines that appear in the Graphics channel */
 .graphics-grid-lines {
   position: absolute;
   inset: 0;
@@ -528,15 +514,10 @@
 }
 
 @keyframes gridLinesFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
-/* The scanline overlay also fades in */
 .disc-channel-scanlines {
   opacity: 0;
   animation: scanlinesFadeIn 1.0s ease-out forwards;
@@ -544,15 +525,10 @@
 }
 
 @keyframes scanlinesFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
-/* The vignette fades in too for a smoother reveal */
 .disc-channel-vignette {
   opacity: 0;
   animation: vignetteFadeIn 0.8s ease-out forwards;
@@ -560,20 +536,9 @@
 }
 
 @keyframes vignetteFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
-/* ---------- Wii-style disc-swoosh wipe transition ----------
-   Plays once, between the Akram Experience's skill-tree animation and
-   the actual page: a big diagonal swoosh (same curve/gradient language
-   as the Disc Channel header) sweeps in to fully cover the screen,
-   holds for a beat with a soft white flash and a scatter of sparks,
-   then sweeps back off - revealing the page that was swapped in
-   underneath while it was covered. */
 
 .wii-wipe {
   position: absolute;
@@ -628,8 +593,6 @@
   100% { transform: translateX(62%) skewX(-13deg); }
 }
 
-/* A glossy highlight band that shimmers through the swoosh the whole
-   time it's on screen, like light catching a disc. */
 .wii-wipe-shine {
   position: absolute;
   inset: -20% -40%;
@@ -651,8 +614,6 @@
   100% { background-position: -20% 0; }
 }
 
-/* Small blue spark diamonds that pop along the swoosh as it sweeps in,
-   same family as the spark effects used elsewhere in the Akram flow. */
 .wii-wipe-spark {
   position: absolute;
   top: var(--top, 50%);
@@ -674,8 +635,6 @@
   100% { opacity: 0; transform: rotate(160deg) scale(0.3); }
 }
 
-/* A quick bright flash right as the swoosh reaches full coverage - the
-   little "pop" moment where the page underneath actually swaps. */
 .wii-wipe-flash {
   position: absolute;
   inset: 0;
@@ -698,13 +657,6 @@
     display: none !important;
   }
 }
-
-/* ---------- Camera-aperture transition (Graphics channel only) ----------
-   A distinct, photography-themed alternative to the disc-swoosh wipe
-   above: an iris closes down to black like a camera shutter, "clicks"
-   with a flash, then reopens onto the gallery. Cyan glow and viewfinder
-   corner brackets keep it in the same Wii chrome family while giving the
-   Graphics channel its own signature moment. */
 
 .camera-iris {
   position: absolute;
@@ -758,8 +710,6 @@
   opacity: 0;
 }
 
-/* Faint rotating blade texture for mechanical flavor, independent of
-   the exact hole radius at any given instant. */
 .camera-iris-blades {
   position: absolute;
   inset: 0;
@@ -779,7 +729,6 @@
   to   { transform: rotate(360deg); }
 }
 
-/* The camera "click" flash right as the aperture reaches full closure */
 .camera-iris-flash {
   position: absolute;
   inset: 0;
@@ -797,9 +746,6 @@
   100% { opacity: 0; }
 }
 
-/* Viewfinder focus brackets - same corner language as the Graphics
-   gallery thumbnails - flick on while the shutter is held closed, so
-   the transition itself previews the destination's visual grammar. */
 .camera-iris-corner {
   position: absolute;
   width: clamp(28px, 4vw, 54px);
@@ -855,15 +801,6 @@
   }
 }
 
-/* ---------- Mii-scatter transition (About Me channel only) ----------
-   A third distinct transition alongside the disc-swoosh and camera-iris
-   wipes above, built entirely out of the person's own Mii: a swarm of
-   bare Mii cutouts - no box, no background chip, just the Mii itself -
-   pop in one at a time at random spots across the screen, gradually
-   filling the whole thing up for the page swap. Holds with a loose,
-   unsynchronized bob (like a small crowd milling around), then the
-   Miis pop away again one by one to reveal the About Me page. */
-
 .mii-pop {
   position: absolute;
   inset: 0;
@@ -900,9 +837,6 @@
   inset: 0;
 }
 
-/* Each Mii is placed at its own random left/top point and pops in and
-   out right there in place - no box, no shared axis, just a scatter of
-   bare cutouts filling the screen. */
 .mii-pop-mii {
   position: absolute;
   width: clamp(42px, 7vw, 78px);
@@ -954,13 +888,130 @@
   }
 }
 
-/* ---------- HOME Menu overlay ----------
-   Brought up with Esc, sitting above the whole Disc Channel (frame,
-   wipe, everything). Loosely modeled on the real Wii HOME Menu: a
-   dimmed/blurred backdrop, a black bar top and bottom, "HOME Menu" in
-   the top-left, a "Close" pill top-right, and - since we don't need a
-   Reset option here - a single big "Wii Menu" button dead center that
-   backs all the way out to the Wii Menu. */
+/* ---------- 8-bit pixel-dissolve transition (Portfolio channel only) ---------- */
+
+.pixel-wipe {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  pointer-events: none;
+  background: #36262f;
+}
+
+.pixel-wipe--hold {
+  animation: pixelImpactShake 90ms steps(3, end);
+}
+
+.pixel-wipe-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(60, 1fr); /* Updated to 60 columns */
+  grid-template-rows: repeat(33, 1fr);    /* Updated to 33 rows */
+}
+
+.pixel-cell {
+  opacity: 0;
+  transform: scale(0.1);
+  filter: brightness(1);
+}
+
+.pixel-wipe--in .pixel-cell {
+  animation: pixelCellIn 100ms steps(6, end) forwards; /* Faster, smoother steps */
+  animation-delay: var(--delay-in);
+}
+
+.pixel-wipe--hold .pixel-cell {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(1);
+}
+
+.pixel-wipe--out .pixel-cell {
+  animation: pixelCellOut 100ms steps(6, end) forwards; /* Faster, smoother steps */
+  animation-delay: var(--delay-out);
+}
+
+@keyframes pixelCellIn {
+  0%   { opacity: 0; transform: scale(0.1); filter: brightness(1); }
+  40%  { opacity: 1; transform: scale(1.18); filter: brightness(2.4); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+}
+@keyframes pixelCellOut {
+  0%   { opacity: 1; transform: scale(1); filter: brightness(1); }
+  45%  { opacity: 1; transform: scale(0.85); filter: brightness(1.9); }
+  100% { opacity: 0; transform: scale(0.1); filter: brightness(1); }
+}
+
+@keyframes pixelImpactShake {
+  0%   { transform: translate(0, 0); }
+  33%  { transform: translate(3px, -2px); }
+  66%  { transform: translate(-3px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.pixel-wipe-scanbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -12%;
+  height: 10%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.pixel-wipe--hold .pixel-wipe-scanbar {
+  opacity: 1;
+  animation: pixelScanSweep 180ms steps(6, end) forwards;
+}
+
+@keyframes pixelScanSweep {
+  0%   { top: -12%; }
+  100% { top: 100%; }
+}
+
+.pixel-wipe-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0;
+}
+
+.pixel-wipe--hold .pixel-wipe-scanlines,
+.pixel-wipe--out .pixel-wipe-scanlines {
+  opacity: 0.6;
+}
+
+.pixel-wipe-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 55%, rgba(54, 38, 47, 0.55) 100%);
+  opacity: 0;
+}
+
+.pixel-wipe--hold .pixel-wipe-vignette {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-wipe {
+    display: none !important;
+  }
+}
 
 .wii-home-overlay {
   position: fixed;
@@ -1105,11 +1156,7 @@
     min-width: 60vw;
   }
 }
-/* ---------- "Back" button for touch devices ----------
-   Phones don't have an Escape key, so once you're actually on the
-   Akram page this gives the same access to the HOME Menu overlay that
-   pressing Esc gives on desktop - a small, unobtrusive pill sitting in
-   the top-left, out of the way of the scroll content. */
+
 .akram-back-fab {
   position: absolute;
   top: max(14px, env(safe-area-inset-top));
@@ -1177,4 +1224,39 @@
     padding: 10px 16px 10px 12px;
     min-height: 42px;
   }
+}
+
+/* ---------- Smooth symmetrical wave pixel-dissolve ---------- */
+.pixel-wipe-grid {
+  display: grid;
+  grid-template-columns: repeat(50, 1fr);
+  grid-template-rows: repeat(28, 1fr);
+}
+
+.pixel-cell {
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@keyframes pixelPop {
+  0%   { opacity: 0; transform: scale(0.1); filter: brightness(1) hue-rotate(0deg); }
+  40%  { opacity: 1; transform: scale(1.2);  filter: brightness(2.2) hue-rotate(10deg); }
+  100% { opacity: 1; transform: scale(1);    filter: brightness(1) hue-rotate(0deg); }
+}
+
+.pixel-wipe--in .pixel-cell {
+  animation: pixelPop 200ms ease-in-out forwards;
+  animation-delay: var(--delay-in);
+}
+
+.pixel-wipe--hold .pixel-cell {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(1);
+}
+
+.pixel-wipe--out .pixel-cell {
+  animation: pixelPop 200ms ease-in-out reverse forwards;
+  animation-delay: var(--delay-out);
 }
