@@ -131,8 +131,7 @@ export default function GamePage({ onGoBack, onEscape }) {
           </>
         ) : (
           <>
-            <span className="game-page-esc-key">⎋ ESC</span>
-            <span className="game-page-esc-label">BACK</span>
+            <span className="game-page-esc-key">MENU</span>
           </>
         )}
       </button>
