@@ -4,7 +4,7 @@ import "./Gamepage.css";
 import GodotGame from "./GodotGame";
 import RetroFrame from "./RetroFrame";
 import BottomBar from "./BottomBar";
-import AutoFitScale from "./AutoFitScale";
+import AutoFitScale from "./Autofitscale";
 
 const TOTAL_SECRETS = 4;
 
