@@ -502,6 +502,22 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const isAkram = isMobilePortrait ? tileIndex === 3 : tileIndex === 10;
   const isSpecialTile = isPortfolio || isAboutMe || isGraphics || isAkram;
 
+  // The Wii custom cursor (owned by App.jsx) should only hide once GamePage
+  // is actually revealed and interactive - i.e. after the wipe transition
+  // finishes, not while browsing the preview/start-video for this channel.
+  // gamePageVisible is exactly that moment (see handleGameWipeCovered below).
+  React.useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('gamePageActive', { detail: { active: !!(isPortfolio && gamePageVisible) } })
+    );
+  }, [isPortfolio, gamePageVisible]);
+
+  React.useEffect(() => {
+    return () => {
+      window.dispatchEvent(new CustomEvent('gamePageActive', { detail: { active: false } }));
+    };
+  }, []);
+
   const getPreviewGif = () => {
     if (isPortfolio) return portfolioGif;
     if (isAboutMe) return aboutMeGif;

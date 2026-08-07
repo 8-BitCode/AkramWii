@@ -1,17 +1,48 @@
-/* Gamepage.css — Portfolio placeholder page */
+/* Gamepage.css — Portfolio channel page, SNES pixel-HUD themed */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 .game-page {
+  /* ---- design tokens ---- */
+  --void: #140a08;
+  --bg-deep: #1c0f0a;
+  --panel: #2a1610;
+  --stone: #6b3a2f;
+  --stone-light: #a8583f;
+  --stone-dark: #3d1f16;
+  --gold: #ffd23f;
+  --gold-dim: #a9812a;
+  --cream: #ffefad;
+  --teal: #6bd6bd;
+  --danger: #ff6b6b;
+  --font-display: 'Press Start 2P', 'Earthbound', monospace;
+  --font-body: 'Courier New', 'Earthbound', monospace;
+
   position: absolute;
   inset: 0;
-  background: #1c1e22;
+  background: var(--bg-deep);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   user-select: none;
   -webkit-user-select: none;
+  cursor: default;
 }
 
-/* ---------- Ambient background ---------- */
+/* Override any site-wide custom cursor while on this page */
+.game-page,
+.game-page *,
+.game-page *::before,
+.game-page *::after {
+  cursor: default !important;
+}
+
+.game-page-esc,
+.game-page-link-row {
+  cursor: pointer !important;
+}
+
+/* ---------- The whole viewport IS the console body: brushed stone/metal ---------- */
 .game-page-bg {
   position: absolute;
   inset: 0;
@@ -22,119 +53,106 @@
 .game-page-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, #2a2d33 0%, #1c1e22 70%, #101114 100%);
+  background-color: #180b08;
+  image-rendering: pixelated;
+  background-image:
+    /* SNES-style offset red brick tile: small bricks, randomized shades so no repeating line down the screen, baked at native 1:1 pixel size (no scaling = no seam) */
+    url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAABsCAIAAAAt/3pMAAAC4UlEQVR4nO3dsWoUURgF4F1NEfAFfAa1ESUggpJm0VqxtUlnYWNpaWlrl9JKfACxCQZsAiKI+gAWo49hNzupvGfCve5cvq+aYtnfyezhL4bjXZ8+urOq48mHr+P1uwc3G0x5ffdGpSkvPn8fr8+ODitNOTg+Ga9f3rpWacqrLz+7nNLm6V+qNAO6tDcMQ4MxppjSxxQbBgICAwGBgYDAQEBgICAwEBAYCAgMBAQGAlXf9F8er5Y/Zb/JlK1h+FPrq9fTe+lpSounb8NAYH31yv6/PwWsVisbBiICAwGBgcD67eZ2yeempbOPj+9V+tds3p+O121Kmm3u5c3965WmPPv0Y7xu8xfracqMKqgNA4E572F6KtCZYkrEhoGAwEBAYCAgMBAQGAgIDAQEBgICAwGBgUD5m/72lcOllzS3huF3te9u81x6Ks9Op8RVUBsGAhqXELBhICAwEBAYCKy/Pd1U+upp5VBJs8T0Xno6F7KnKTYMBJxxaYopARsGAgIDAYGBgMBAQGAgIDAQEBgICAwEBAYC3vQXal/S7OdcyJ6m2DAQ0LiEgA0DAYGBgMBAYK+w2Tet6bU5sbFNsfHs6LDSlIPjk/F6Z09sLNS+pNnmNzbj6dswEHDGpSmmBGwYCAgMBAQGAgIDAYGBgMBAQGAgIDAQEBgI7JU2+87V9JZ+YuPW8qdc6MTGUv+hpLmjvzEbBgIalxCwYSAgMBAQGAiUNi5nmNb02kzpqT7ZZkqbYmObe2nz9G0YCPifL00xJWDDQEBgICAwEBAYCAgMBAQGAgIDAYGBgMBAoLhxOcO5mt7Sy4Bbyz9JczplR4uNxVqfPWrDQEDjEgI2DAQEBgICA4H1r+cPSz7XvnLY01mKbc7rVNIsMb2XGc/FhoGAMy5NMSVgw0BAYCAgMBAQGAgIDAQEBgICAwGBgYDAQGDX3vS3KdAt4CzFGZQ0y1zoN2bDQEDjEgI2DAQEBgICA4G/dLGqIgmOEqIAAAAASUVORK5CYII="),
+    /* overhead-light falloff toward the edges, sells the depth of the whole panel */
+    radial-gradient(ellipse 85% 75% at 50% 38%, transparent 40%, rgba(10, 5, 4, 0.6) 100%);
+  background-size: 272px 108px, 100% 100%;
+  background-repeat: repeat, no-repeat;
 }
 
-.game-page-scanlines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.02) 0px,
-    rgba(255, 255, 255, 0.02) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  mix-blend-mode: screen;
-  opacity: 0.5;
-}
-
-/* ---------- Header ---------- */
-.game-page-header {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: clamp(16px, 3vh, 26px) clamp(20px, 4vw, 40px);
-  flex-shrink: 0;
-  background: #f8f9fb;
-}
-
-.game-page-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 4px;
-  background: linear-gradient(90deg, #a7e8f2 0%, #4fc7de 45%, #2bb3cf 78%, #1c8fa8 100%);
-  box-shadow: 0 2px 10px rgba(53, 195, 219, 0.45);
-}
-
-.game-page-header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.game-page-title {
-  margin: 0;
-  font-family: "WiiBold", "Segoe UI", sans-serif;
-  font-size: clamp(20px, 3.2vw, 32px);
-  color: #3a3b3f;
-  letter-spacing: 0.3px;
-}
-
-.game-page-subtitle {
-  margin: 0;
-  font-family: "WiiMedium", "Segoe UI", sans-serif;
-  font-size: clamp(12px, 1.5vw, 15px);
-  color: #7b7c83;
-}
-
+/* ---------- Floating ESC / pause button ---------- */
 .game-page-esc {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 18px 10px 16px;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(233, 237, 241, 0.95) 100%);
-  font-family: "WiiMedium", "Segoe UI", sans-serif;
-  font-size: clamp(11px, 1.2vw, 14px);
-  color: #4c4d51;
+  padding: 9px 16px;
+  border: 4px solid var(--void);
+  border-radius: 0;
+  background: var(--stone);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 0 0 1px rgba(53, 195, 219, 0.4);
-  transition: all 0.25s ease;
+    inset 3px 3px 0 var(--stone-light),
+    inset -3px -3px 0 var(--stone-dark),
+    7px 7px 0 var(--void),
+    7px 7px 0 4px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(11px, 1.2vw, 13px);
+  color: var(--cream);
+  transition: transform 0.06s linear, box-shadow 0.06s linear;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .game-page-esc:hover {
-  transform: translateY(-1px) scale(1.03);
+  transform: translate(-3px, -3px);
   box-shadow:
-    0 6px 24px rgba(53, 195, 219, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 1px rgba(53, 195, 219, 0.6);
+    inset 3px 3px 0 var(--stone-light),
+    inset -3px -3px 0 var(--stone-dark),
+    10px 10px 0 var(--void),
+    10px 10px 0 4px rgba(0, 0, 0, 0.35);
 }
 
 .game-page-esc:active {
-  transform: translateY(0) scale(0.98);
+  transform: translate(4px, 4px);
+  box-shadow:
+    inset 3px 3px 0 var(--stone-dark),
+    inset -3px -3px 0 var(--stone-light),
+    1px 1px 0 var(--void);
+}
+
+.game-page-esc-floating {
+  position: absolute;
+  top: clamp(14px, 2.4vh, 22px);
+  right: clamp(16px, 3vw, 32px);
+  z-index: 3;
+  padding: 6px;
+}
+
+.game-page-esc-floating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background: var(--stone-dark);
+  border-style: solid;
+  border-width: 3px;
+  border-color: var(--void) var(--stone-light) var(--stone-light) var(--void);
+  box-shadow:
+    inset 0 0 0 6px var(--panel),
+    0 4px 8px rgba(0, 0, 0, 0.45);
+  z-index: -1;
 }
 
 .game-page-esc-key {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(53, 195, 219, 0.2);
-  border: 1.5px solid rgba(53, 195, 219, 0.4);
-  font-family: "WiiBold", "Segoe UI", sans-serif;
+  padding: 3px 8px;
+  background: var(--panel);
+  border: 2px solid var(--void);
+  box-shadow: inset 0 0 0 1px var(--gold-dim);
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: var(--gold);
+}
+
+.game-page-esc-label {
+  font-family: var(--font-body);
   font-weight: 700;
-  color: #1a8a9a;
 }
 
 .game-page-esc-mobile-label {
-  font-family: "WiiBold", "Segoe UI", sans-serif;
-  font-size: clamp(12px, 3.4vw, 14px);
-  font-weight: 700;
-  color: #4c4d51;
+  font-family: var(--font-display);
+  font-size: clamp(8px, 2.6vw, 10px);
+  font-weight: 400;
+  color: var(--cream);
 }
 
 .game-page-esc-mobile-arrow {
-  width: 16px;
-  height: 16px;
-  color: #1a8a9a;
+  width: 14px;
+  height: 14px;
+  color: var(--gold);
 }
 
 /* ---------- Body ---------- */
@@ -146,57 +164,387 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
-  padding: clamp(24px, 5vh, 48px);
+  padding: clamp(84px, 15vh, 128px) clamp(20px, 4vw, 40px) clamp(20px, 4vh, 40px);
 }
 
-.game-page-placeholder {
+/* ---------- Desktop content grid ---------- */
+.game-page-content {
+  display: grid;
+  grid-template-columns: minmax(190px, 240px) 1fr minmax(190px, 240px);
+  grid-template-areas: "left stage right";
+  gap: clamp(14px, 2vw, 22px);
+  width: 100%;
+  max-width: 1200px;
+  align-items: start;
+}
+
+.game-page-sidebar {
   display: flex;
   flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.game-page-sidebar-left { grid-area: left; }
+.game-page-sidebar-right { grid-area: right; }
+
+.game-page-stage {
+  grid-area: stage;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ---------- Tablet / narrow-desktop: sidebars move below the stage and
+   flow into a responsive row instead of squeezing beside it ---------- */
+@media (max-width: 1080px) and (min-width: 601px) {
+  .game-page-content {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "stage stage"
+      "left  right";
+    max-width: 760px;
+    gap: 20px;
+  }
+
+  .game-page-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .game-page-sidebar .game-page-tile {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .game-page-body {
+    padding-top: clamp(64px, 12vh, 96px);
+  }
+}
+
+@media (max-width: 760px) and (min-width: 601px) {
+  .game-page-content {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "stage"
+      "left"
+      "right";
+    max-width: 460px;
+  }
+}
+
+/* ---------- HUD plaques: recesses carved into the console body, not cards floating on it ---------- */
+.game-page-tile {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--panel);
+  border-style: solid;
+  border-width: 8px;
+  border-color: var(--void) var(--stone-light) var(--stone-light) var(--void);
+  border-radius: 0;
+  box-shadow:
+    inset 8px 8px 0 var(--stone-dark),
+    0 3px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 4px rgba(0, 0, 0, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+.game-page-tile-title-row {
+  display: flex;
   align-items: center;
-  gap: clamp(14px, 2.4vh, 22px);
+  gap: 8px;
+  margin-bottom: 11px;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed rgba(168, 88, 63, 0.3);
+}
+
+.game-page-tile-icon {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(1px 1px 0 var(--void));
+}
+
+.game-page-tile-title {
+  font-family: var(--font-display);
+  font-size: clamp(8px, 0.85vw, 10px);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.game-page-tile-body {
+  padding: 13px 14px 15px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(11px, 1vw, 12.5px);
+  line-height: 1.7;
+  color: var(--cream);
+}
+
+.game-page-tile-body p {
+  margin: 0 0 8px;
+}
+
+.game-page-tile-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Controls table */
+.game-page-controls-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.game-page-controls-table td {
+  vertical-align: middle;
+}
+
+.game-page-controls-key {
+  display: inline-block;
+  min-width: 20px;
   text-align: center;
-  padding: clamp(28px, 5vw, 48px);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: var(--void);
+  background: var(--gold);
+  font-family: var(--font-display);
+  font-size: 8px;
+  padding: 4px 6px;
+  margin-right: 10px;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.4),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.25),
+    3px 3px 0 var(--void);
+  white-space: nowrap;
 }
 
-.game-page-placeholder-icon {
-  width: clamp(48px, 8vw, 72px);
-  height: clamp(48px, 8vw, 72px);
-  fill: none;
-  stroke: #35c3db;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 10px rgba(53, 195, 219, 0.4));
+/* Quick Connect links */
+.game-page-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.game-page-placeholder-text {
-  margin: 0;
-  max-width: 360px;
-  font-family: "WiiMedium", "Segoe UI", sans-serif;
-  font-size: clamp(13px, 1.8vw, 16px);
-  line-height: 1.6;
-  color: #cfd2d6;
+.game-page-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 0;
+  text-decoration: none;
+  background: var(--stone-dark);
+  border: 2px solid var(--void);
+  box-shadow:
+    inset 0 0 0 1px rgba(168, 88, 63, 0.35),
+    inset 2px 2px 0 rgba(0, 0, 0, 0.3),
+    3px 3px 0 var(--void);
+  transition: transform 0.06s linear, box-shadow 0.06s linear;
+}
+
+.game-page-link-row:hover {
+  transform: translate(-2px, -2px);
+  box-shadow:
+    inset 0 0 0 1px rgba(168, 88, 63, 0.5),
+    inset 2px 2px 0 rgba(0, 0, 0, 0.3),
+    5px 5px 0 var(--void);
+  background: #4a2418;
+}
+
+.game-page-link-icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  filter: drop-shadow(1px 1px 0 var(--void));
+}
+
+.game-page-link-label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(11px, 1vw, 12.5px);
+  color: var(--teal);
+  text-decoration: none;
+}
+
+/* Current Quest */
+.game-page-quest-text {
+  text-align: center;
+  margin-bottom: 14px !important;
+}
+
+.game-page-quest-progress {
+  border-top: 2px dashed var(--stone);
+  padding-top: 12px;
+  text-align: center;
+}
+
+.game-page-quest-stars {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.game-page-quest-star {
+  font-size: 15px;
+  filter: grayscale(1) opacity(0.3) drop-shadow(1px 1px 0 var(--void));
+  transform: scale(1);
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.game-page-quest-star.is-found {
+  filter: drop-shadow(0 0 4px var(--gold)) drop-shadow(1px 1px 0 var(--void));
+  transform: scale(1.2);
+}
+
+.game-page-quest-count {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: clamp(10px, 0.95vw, 11.5px);
+}
+
+.game-page-quest-label {
+  margin: 6px 0 0 !important;
+  font-family: var(--font-body);
+  font-weight: 700;
+  color: #a88970;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
+
+.game-page-quest-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: left;
+}
+
+.game-page-quest-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(10px, 0.9vw, 11px);
+  color: #8b6f60;
+  transition: color 0.3s ease;
+}
+
+.game-page-quest-item.is-found {
+  color: var(--teal);
+}
+
+.game-page-quest-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  font-size: 9px;
+  color: var(--void);
+  background: #3d2a20;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.15),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.3),
+    2px 2px 0 var(--void);
+}
+
+.game-page-quest-item.is-found .game-page-quest-check {
+  background: var(--gold);
+}
+
+/* ---------- Game stage overlay ---------- */
+.game-page-stage-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(10, 8, 20, 0.72);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.game-page-stage-overlay-text {
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: clamp(7.5px, 1vw, 9.5px);
+  letter-spacing: 0.5px;
+  background: var(--void);
+  border: 2px solid var(--gold-dim);
+  padding: 10px 16px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  animation: hudBlink 1.3s steps(2) infinite;
+}
+
+@keyframes hudBlink {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0.55; }
+}
+
+/* ---------- Dialogue box (desktop) ---------- */
+.game-page-dialogue {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: clamp(48px, 8vh, 80px) auto clamp(20px, 4vh, 20px);
+  padding: 0 clamp(20px, 4vw, 40px);
+  box-sizing: border-box;
 }
 
 /* ---------- Mobile ---------- */
+.game-page-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.game-page-mobile-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.game-page-mobile-dialogue {
+  width: 100%;
+  margin-top: 0px;
+}
+
+.game-page-mobile-note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(255, 239, 173, 0.4);
+  text-align: center;
+}
+
 @media (max-width: 600px) {
-  .game-page-header {
-    padding: 14px 16px;
-  }
-
-  .game-page-title {
-    font-size: 20px;
-  }
-
-  .game-page-subtitle {
-    font-size: 11px;
-  }
-
   .game-page-esc {
-    padding: 7px 12px 7px 14px;
+    padding: 7px 12px;
     gap: 6px;
+  }
+
+  .game-page-esc-floating {
+    top: 12px;
+    right: 12px;
+  }
+
+  .game-page-body {
+    padding-top: 48px;
   }
 }

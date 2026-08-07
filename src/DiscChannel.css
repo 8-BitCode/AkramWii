@@ -18,6 +18,8 @@
   z-index: 40;
   border-radius: 30px;
   overflow: hidden;
+  /* Allow mouse events to pass through non-interactive backdrop areas of the frame */
+  pointer-events: none;
   background:
     repeating-linear-gradient(
       to bottom,
@@ -31,7 +33,6 @@
     0 24px 70px rgba(0, 0, 0, 0.55),
     inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
-
 /* ---------- Graphics tile: 3D floating Aero balls ---------- */
 
 .graphics-orbs {
@@ -897,6 +898,17 @@
   overflow: hidden;
   pointer-events: none;
   background: #36262f;
+  /* Only needed while the mosaic is still filling in and there's nothing
+     underneath ready to show yet. Once fully covered, this fades away so
+     the GamePage (already revealed at that exact moment, fully hidden
+     behind the opaque cells) is what shows through as the cells dissolve
+     back out — instead of the wipe's own backdrop. */
+  transition: background-color 120ms linear;
+}
+
+.pixel-wipe--hold,
+.pixel-wipe--out {
+  background: transparent;
 }
 
 .pixel-wipe--hold {

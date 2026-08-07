@@ -192,6 +192,14 @@ export default () => {
       cursorRef.current.style.left = lastClientX + 'px';
       cursorRef.current.style.top = lastClientY + 'px';
 
+      // GamePage owns its own regular cursor while it's on screen; everywhere
+      // else (the Wii menu, DiscChannel, the HOME/pause overlay, etc.) uses
+      // this custom cursor. Checking the actual element under the pointer
+      // each frame is immune to DiscChannel's open/close/reveal transitions -
+      // there's nothing to keep in sync, it's just "what's under the mouse".
+      const overGamePage = !!lastTarget?.closest?.('.game-page');
+      cursorRef.current.style.display = overGamePage ? 'none' : '';
+
       let isInteractive = !!lastTarget?.closest?.(INTERACTIVE_SELECTOR);
       if (!isInteractive) {
         isInteractive = isPointInInteractiveArea(lastClientX, lastClientY);
