@@ -3,7 +3,7 @@ import React from "react";
 import WarningScreen from "./Warningscreen";
 import App from "./App";
 import "./Root.css";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
