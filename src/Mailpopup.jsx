@@ -152,6 +152,9 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
     window.setTimeout(() => setShaking(false), 420);
   };
 
+  // Helper to detect LinkedIn line
+  const isLinkedInLine = (text) => text.includes("linkedin.com");
+
   return (
     <>
       <div
@@ -190,7 +193,18 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
         <div className="mail-popup-body">
           {CONTACT_LINES.map((line, i) => (
             <div className="mail-popup-line" key={i}>
-              <span className="mail-popup-text">{line}</span>
+              {isLinkedInLine(line) ? (
+                <a
+                  href={`https://${line}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mail-popup-link"
+                >
+                  {line}
+                </a>
+              ) : (
+                <span className="mail-popup-text">{line}</span>
+              )}
             </div>
           ))}
           <div className="mail-popup-line mail-popup-line--empty" />

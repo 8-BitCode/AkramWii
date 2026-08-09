@@ -198,3 +198,26 @@
     left: -14px;
   }
 }
+
+/* LinkedIn link styling */
+.mail-popup-link {
+  color: #6ab0e6;                /* Light blue – matches the theme's teal/cyan */
+  text-decoration: none;         /* Clean, no underline by default */
+  font-family: "Georgia", "Times New Roman", serif; /* Same as other text */
+  font-size: clamp(14px, 2.2vw, 18px);
+  letter-spacing: 0.2px;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.mail-popup-link:hover {
+  color: #8ac4f0;               /* Lighter on hover */
+  text-decoration: underline;    /* Shows it's clickable */
+}
+
+.mail-popup-link:visited {
+  color: #6ab0e6;               /* Keep consistent, or use a slightly muted blue if you prefer */
+}
+
+/* Optional: if you want to use the exact theme primary color */
+/* .mail-popup-link { color: #35c3db; } */
+/* .mail-popup-link:hover { color: #6fdcef; } */

@@ -540,7 +540,7 @@ export default function AboutMePage({ onGoBack, onEscape }) {
 
               <h3 className="content-headline" style={{ marginTop: "25px" }}>Hey, welcome in</h3>
               <p className="content-body">
-                I'm a student at the University of Manchester. My creative energy comes in bursts — long quiet stretches followed by bouts of drive where I'll disappear into something for days at a time. A good chunk of that time goes into studying design: pulling apart different styles, eras, and movements to understand what actually makes them work.
+                I'm a student at the University of Manchester. My creative process builds on exploration and analytical deep-dives followed by focused sprints where I commit entirely to bringing a vision to life. A good chunk of this time goes into studying design: pulling apart different styles, eras, and movements to understand what actually makes them work
               </p>
               <p className="content-body" style={{ marginTop: "15px" }}>
                 Most of that shows up in code: web projects, interfaces I keep rebuilding until they feel right. I like the process more than any finished result.
@@ -575,7 +575,7 @@ export default function AboutMePage({ onGoBack, onEscape }) {
                     <img src={hypnospaceArt} alt="Hypnospace Outlaw" />
                   </div>
                   <strong>Hypnospace Outlaw</strong>
-                  <span>It doesn't feel like it's catering to you as the player — you're dropped into a world full of unique characters and history, and you're just watching the natural consequences of them unfold. I'm also completely in love with the fantastic anarchy of the Geocities aesthetic it adopts; it inspires a lot of my own projects.</span>
+                  <span>It doesn't feel like it's catering to you as the player. You're dropped into a world full of unique characters and history, and you're just watching the natural consequences of them unfold. I'm also completely in love with the fantastic anarchy of the Geocities aesthetic it adopts; it inspires a lot of my own projects.</span>
                 </div>
                 <div className="game-card">
                   <div className="game-placeholder">
@@ -589,7 +589,7 @@ export default function AboutMePage({ onGoBack, onEscape }) {
                     <img src={beginnersArt} alt="The Beginner's Guide" />
                   </div>
                   <strong>The Beginner's Guide</strong>
-                  <span>A profound look at creative intent, projection, and creator intimacy. This is a piece of media that has really confronted my desire for external validation, and deeply challenged the ethics of narrativising a person's art.</span>
+                  <span>A profound look at creative intent, projection, and creator intimacy. This is a piece of media that has really confronted my desire for external validation, and deeply challenges the ethics of narrativising a person's art.</span>
                 </div>
                 <div className="game-card">
                   <div className="game-placeholder">
@@ -673,7 +673,7 @@ export default function AboutMePage({ onGoBack, onEscape }) {
             </div>
             <div className="panel-content">
               <h3 className="content-headline">The Lab</h3>
-              <p className="content-body">A few things about me that didn't fit anywhere else. Drag the mind to spin it, or tap a marker directly.</p>
+              <p className="content-body">A few things about me that didn't fit anywhere else. Drag my mind around and tap on the markers to found out more</p>
               
               <div className="globe-lab-container">
                 <div className="globe-viewport" style={{ width: isMobile ? '240px' : '340px', height: isMobile ? '240px' : '340px' }}>
