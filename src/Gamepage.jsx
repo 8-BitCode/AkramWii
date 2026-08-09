@@ -159,8 +159,8 @@ export default function GamePage({ onGoBack, onEscape, onGameReady }) {
         ) : (
           <div className="game-page-content">
             <div className="game-page-sidebar game-page-sidebar-left">
-              <HudPlaque icon="🧑‍💻" title="About This Site">
-                <p>This portfolio is a playable experience.</p>
+              <HudPlaque icon="🧑‍💻" title="About This Game">
+                <p>This game is a playable portfolio.</p>
                 <p>Built with React, Godot Engine and heart!</p>
                 <p>Explore, interact, and discover more about me.</p>
               </HudPlaque>
@@ -208,7 +208,7 @@ export default function GamePage({ onGoBack, onEscape, onGameReady }) {
               </HudPlaque>
 
               <HudPlaque icon="⭐" title="Current Quest">
-                <p className="game-page-quest-text">Explore the world and learn more about me!</p>
+                <p className="game-page-quest-text">Explore the world and found out more!</p>
                 <div className="game-page-quest-progress">
                   <div className="game-page-quest-stars">
                     {Array.from({ length: TOTAL_SECRETS }).map((_, i) => (

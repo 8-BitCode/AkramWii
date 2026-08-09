@@ -492,7 +492,7 @@ function HomeMenuOverlay({ onClose, onGoToMenu }) {
 
       <div className="wii-home-center">
         <button type="button" className="wii-home-menu-btn" onClick={onGoToMenu}>
-          Wii Menu
+          Menu
         </button>
       </div>
 
@@ -1523,7 +1523,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             }}
             disabled={closing}
           >
-            {isSpecialTile ? "Back" : "Wii Menu"}
+            {isSpecialTile ? "Back" : "Menu"}
           </button>
           <button 
             className="disc-channel-btn disc-channel-btn--start" 

@@ -549,8 +549,8 @@ export default function AkramPage({ onGoBack, onEscape }) {
               icon="🖌️"
               tone="green"
               title="Graphics Lead, UNICS"
-              meta="Computer Science Society, University of Manchester"
-              text="Handles visual design for UNICS - event graphics and the overall look carried across its hackathons and socials."
+              meta="Computer Science Society, University of Manchester 2025 - 2026"
+              text="I Handled visual design for UNICS - event graphics and the overall look carried across its socials and events"
             />
 
             <div className="akram-tree-gap" />
@@ -565,7 +565,7 @@ export default function AkramPage({ onGoBack, onEscape }) {
               tone="green"
               title="PASS Leader, Peer Support"
               meta="University of Manchester · Sep 2025 – Jul 2026 · Hybrid"
-              text="Mentors around 15 first-year Computer Science students through weekly sessions, running collaborative activities and helping them settle into university life."
+              text="I Mentored around 3 - 15 first-year Computer Science students through weekly sessions, running collaborative activities and helping them settle into university life."
               chips={["Mentoring", "Academic Advising"]}
             />
 
@@ -581,7 +581,7 @@ export default function AkramPage({ onGoBack, onEscape }) {
               tone="green"
               title="StudentHack2025 — Desktopia"
               pill="🥉 3rd Place, Main Challenge"
-              text="At his first hackathon, Akram teamed up with three friends to build a satirical surveillance-state game with two endings, built in a single sleep-deprived weekend."
+              text="At my first hackathon, I teamed up with three friends to build a satirical surveillance-state game with two endings, built in a single sleep-deprived weekend."
               mutedText="Led the brutalist front-end design that gave the game its tone."
               chips={["React + Flask", "Brutalist UI"]}
             />
