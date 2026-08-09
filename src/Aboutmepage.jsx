@@ -51,7 +51,7 @@ const LAB_FACTS = [
   {
     id: 1,
     title: "Cooking Without a Recipe",
-    text: "I love to cook. It gives me the freedom to not be super precise while still giving me more opportunities to improve and master. #ThisIsAMetaphore"
+    text: "I love to cook. It gives me the freedom to not be super precise while still giving me more opportunities to improve and master. #ThisIsAMetaphor"
   },
   {
     id: 2,
