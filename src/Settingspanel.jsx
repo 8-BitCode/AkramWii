@@ -2,7 +2,7 @@
 import React from "react";
 import "./Mailpopup.css";
 import "./Settingspanel.css";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 const DURATION = 560;
 const EASE = "cubic-bezier(0.22, 1.12, 0.3, 1)";

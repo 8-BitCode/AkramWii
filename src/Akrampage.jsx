@@ -10,7 +10,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./Akrampage.css";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 /* ---------- small lock glyph shown on any node before it's tapped ---------- */
 function LockIcon() {

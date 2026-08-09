@@ -5,7 +5,7 @@
 */
 import React from "react";
 import "./Graphicspage.css";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 const GRAPHICS_DATA = [
   { id: 1, title: "Unics Game Jam", ext: "jpg" },

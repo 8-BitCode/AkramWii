@@ -13,7 +13,7 @@ import GraphicsPage from "./Graphicspage";
 import AboutMePage from "./Aboutmepage";
 import GamePage from "./Gamepage";
 import miiImg from "./Assets/Mii1.png";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";

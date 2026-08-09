@@ -4,7 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import "./Aboutmepage.css";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 // Face assets
 import mii1Face from "./Assets/Mii1face.png";

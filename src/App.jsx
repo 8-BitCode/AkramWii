@@ -9,7 +9,7 @@ import graphicsGif from "./Assets/Graphicspreviewtile.gif";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
 import experiencePreview from "./Assets/Experiencepreview.gif";
 import { AkramTileArt } from "./Akramart";
-import sound from "./SoundManager";
+import sound from "./Soundmanager";
 
 // Resolved once at module load - no need to recompute this on every render.
 let experiencePreviewMobile = experiencePreview;

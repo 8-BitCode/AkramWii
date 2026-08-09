@@ -5,7 +5,7 @@ import GodotGame from "./GodotGame";
 import RetroFrame from "./RetroFrame";
 import BottomBar from "./BottomBar";
 import AutoFitScale from "./Autofitscale";
-import sound from "./SoundManager"; // <-- Import sound manager
+import sound from "./Soundmanager"; // <-- Import sound manager
 
 const TOTAL_SECRETS = 4;
 
