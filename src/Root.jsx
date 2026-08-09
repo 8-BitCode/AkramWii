@@ -67,25 +67,37 @@ export default function Root() {
 
     if (warningRef.current) {
       const opacity = clamp(1 - p * 1.3, 0, 1);
-      const blur = p * 16;
-      const scale = 1 + p * 0.22;
-      const translate = -p * 46;
+      // Blurring the whole warning screen every frame is one of the more
+      // expensive parts of this transition (filter repaints, unlike
+      // opacity/transform which the compositor handles for free). Two
+      // cheap wins: cap the max blur (8px reads as "gone" just as well as
+      // 16px once combined with opacity/scale), and stop touching the
+      // element entirely once it's fully transparent instead of
+      // continuing to recompute a growing blur nobody can see.
+      const invisible = opacity <= 0;
       warningRef.current.style.opacity = String(opacity);
-      warningRef.current.style.filter = `blur(${blur}px)`;
-      warningRef.current.style.transform = `translateY(${translate}px) scale(${scale})`;
+      if (!invisible) {
+        const blur = p * 8;
+        const scale = 1 + p * 0.22;
+        const translate = -p * 46;
+        warningRef.current.style.filter = `blur(${blur}px)`;
+        warningRef.current.style.transform = `translateY(${translate}px) scale(${scale})`;
+        warningRef.current.style.display = "";
+      } else if (warningRef.current.style.display !== "none") {
+        warningRef.current.style.display = "none";
+      }
     }
 
     if (ring1Ref.current) {
-      const size = p * 260;
-      ring1Ref.current.style.width = `${size}vmax`;
-      ring1Ref.current.style.height = `${size}vmax`;
+      // Ring element is now a fixed 260vmax circle in CSS; scale (0-1)
+      // stands in for the old 0-260vmax width/height growth.
+      const scale = p;
+      ring1Ref.current.style.transform = `translate(-50%, -50%) scale(${scale})`;
       ring1Ref.current.style.opacity = p < 0.04 ? "0" : String(clamp(1 - Math.max(0, p - 0.75) / 0.25, 0, 1) * 0.7);
     }
     if (ring2Ref.current) {
       const local = clamp((p - 0.08) / 0.92, 0, 1);
-      const size = local * 260;
-      ring2Ref.current.style.width = `${size}vmax`;
-      ring2Ref.current.style.height = `${size}vmax`;
+      ring2Ref.current.style.transform = `translate(-50%, -50%) scale(${local})`;
       ring2Ref.current.style.opacity = local < 0.04 ? "0" : String(clamp(1 - Math.max(0, local - 0.7) / 0.3, 0, 1) * 0.5);
     }
 
@@ -125,12 +137,21 @@ export default function Root() {
     }
   }, []);
 
+  const lastAppliedRef = React.useRef(-1);
+
   const loop = React.useCallback(() => {
     progressRef.current = lerp(progressRef.current, targetRef.current, 0.16);
     if (Math.abs(progressRef.current - targetRef.current) < 0.0008) {
       progressRef.current = targetRef.current;
     }
-    applyFrame(progressRef.current);
+    // Once the eased value has basically stopped moving (e.g. holding
+    // still between scroll inputs), skip re-writing ~15 style properties
+    // across 12+ elements for a change too small to see. Still runs the
+    // finish-detection below every frame, just without the paint work.
+    if (Math.abs(progressRef.current - lastAppliedRef.current) > 0.0004) {
+      applyFrame(progressRef.current);
+      lastAppliedRef.current = progressRef.current;
+    }
 
     if (progressRef.current >= 0.999 && targetRef.current >= 0.999) {
       if (!settleTimerRef.current && !doneRef.current) {
@@ -178,7 +199,7 @@ export default function Root() {
 
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const SCROLL_SENSITIVITY = 0.0016;
-    const TOUCH_SENSITIVITY = 0.0028;
+    const TOUCH_SENSITIVITY = 0.0048;
 
     const skipToEnd = () => {
       doneRef.current = true;

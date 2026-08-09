@@ -185,44 +185,58 @@ function CameraApertureTransition({ active, onCovered, onDone }) {
 }
 
 /* ---------- Mii-scatter transition (About Me channel only) ---------- */
-// Perf note: this used to be a 30x30 (900-node) grid. Each node is an <img>
-// with its own filter/transform animation and staggered delay, so 900 of
-// them meant 900 individually-tracked CSS animations + paints every time
-// the About Me channel opened or closed - by far the heaviest transition
-// in the app. Dropping to 10x9 (90 nodes, a 10x reduction) keeps the same
-// "swarm" look at this screen size while cutting that cost by ~90%. The
-// per-node stagger step is scaled up 10x (1ms -> 10ms) so the overall
-// in/out duration - and therefore the visual timing/feel - stays the same.
-const MII_POP_COLS = 10;
-const MII_POP_ROWS = 9;
-const MII_POP_COUNT = MII_POP_COLS * MII_POP_ROWS;
-const MII_POP_STEP_IN = 10;
-const MII_POP_STEP_OUT = 10;
+// Perf note: this used to be a fixed 30x30 (900-node) grid on every device,
+// including phones - which are exactly the devices least able to afford
+// 900 individually-animated <img> elements. Desktop gets the full 16x13
+// (208-node) density; mobile gets a lighter 9x8 (72-node) grid instead,
+// sized up via CSS (see .mii-pop--compact in DiscChannel.css) to still
+// fully cover a phone screen. The per-node stagger step is derived from
+// the count so the overall in/out duration - and therefore the visual
+// timing/feel - stays about the same on both.
+const MII_POP_TARGET_SPREAD_MS = 890; // matches the original 900-node timing
 const MII_POP_DURATION_IN = 260;
 const MII_POP_DURATION_OUT = 220;
-const MII_POP_IN_MS = (MII_POP_COUNT - 1) * MII_POP_STEP_IN + MII_POP_DURATION_IN + 40;
 const MII_POP_HOLD_MS = 1000;
-const MII_POP_OUT_MS = (MII_POP_COUNT - 1) * MII_POP_STEP_OUT + MII_POP_DURATION_OUT + 40;
 
-function MiiPopulateTransition({ active, onCovered, onDone }) {
+const getMiiPopConfig = (isMobile) => {
+  const cols = isMobile ? 9 : 16;
+  const rows = isMobile ? 8 : 13;
+  const count = cols * rows;
+  const stepIn = MII_POP_TARGET_SPREAD_MS / (count - 1);
+  const stepOut = stepIn;
+  return {
+    cols,
+    rows,
+    count,
+    stepIn,
+    stepOut,
+    inMs: (count - 1) * stepIn + MII_POP_DURATION_IN + 40,
+    outMs: (count - 1) * stepOut + MII_POP_DURATION_OUT + 40,
+  };
+};
+
+function MiiPopulateTransition({ active, isMobile, onCovered, onDone }) {
   const [stage, setStage] = React.useState("idle");
   const timeoutsRef = React.useRef([]);
   const firedRef = React.useRef(false);
 
+  const cfg = React.useMemo(() => getMiiPopConfig(isMobile), [isMobile]);
+
   const miis = React.useMemo(() => {
-    const indices = Array.from({ length: MII_POP_COUNT }, (_, i) => i);
-    for (let i = MII_POP_COUNT - 1; i > 0; i--) {
+    const { cols, rows, count, stepIn, stepOut } = cfg;
+    const indices = Array.from({ length: count }, (_, i) => i);
+    for (let i = count - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
 
-    return Array.from({ length: MII_POP_COUNT }).map((_, i) => {
+    return Array.from({ length: count }).map((_, i) => {
       const orderIndex = indices.indexOf(i);
-      const col = i % MII_POP_COLS;
-      const row = Math.floor(i / MII_POP_COLS);
+      const col = i % cols;
+      const row = Math.floor(i / cols);
 
-      const baseX = (col / (MII_POP_COLS - 1)) * 118 - 9; 
-      const baseY = (row / (MII_POP_ROWS - 1)) * 118 - 9; 
+      const baseX = (col / (cols - 1)) * 118 - 9; 
+      const baseY = (row / (rows - 1)) * 118 - 9; 
 
       const jitterX = (Math.random() - 0.5) * 5;
       const jitterY = (Math.random() - 0.5) * 5;
@@ -233,13 +247,13 @@ function MiiPopulateTransition({ active, onCovered, onDone }) {
         y: baseY + jitterY,
         rot: Math.round(Math.random() * 80 - 40),
         scale: 1.1 + Math.random() * 0.7,
-        delayIn: orderIndex * MII_POP_STEP_IN,
-        delayOut: Math.round(orderIndex * MII_POP_STEP_OUT + Math.random() * 3),
+        delayIn: orderIndex * stepIn,
+        delayOut: Math.round(orderIndex * stepOut + Math.random() * 3),
         bobDelay: Math.round(Math.random() * 900),
         zIndex: orderIndex, 
       };
     }).sort((a, b) => a.zIndex - b.zIndex); 
-  }, []);
+  }, [cfg]);
 
   React.useEffect(() => {
     if (!active || firedRef.current) return undefined;
@@ -261,27 +275,27 @@ function MiiPopulateTransition({ active, onCovered, onDone }) {
       setTimeout(() => {
         setStage("hold");
         onCovered?.();
-      }, MII_POP_IN_MS),
-      setTimeout(() => setStage("out"), MII_POP_IN_MS + MII_POP_HOLD_MS),
+      }, cfg.inMs),
+      setTimeout(() => setStage("out"), cfg.inMs + MII_POP_HOLD_MS),
       setTimeout(() => {
         setStage("idle");
         firedRef.current = false;
         onDone?.();
-      }, MII_POP_IN_MS + MII_POP_HOLD_MS + MII_POP_OUT_MS)
+      }, cfg.inMs + MII_POP_HOLD_MS + cfg.outMs)
     );
 
     return () => {
       timeoutsRef.current.forEach(clearTimeout);
       timeoutsRef.current = [];
     };
-  }, [active]);
+  }, [active, cfg]);
 
   if (stage === "idle") return null;
 
   const activeModifierClass = stage === "out" ? "mii-pop--out" : "mii-pop--in";
 
   return (
-    <div className={`mii-pop ${activeModifierClass}`} aria-hidden="true">
+    <div className={`mii-pop ${activeModifierClass} ${isMobile ? "mii-pop--compact" : ""}`} aria-hidden="true">
       <div className="mii-pop-backdrop" />
       <div className="mii-pop-field">
         {miis.map((m) => (
@@ -1312,6 +1326,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
           <MiiPopulateTransition
             active={showAboutMeWipe}
+            isMobile={isMobilePortrait}
             onCovered={handleAboutMeWipeCovered}
             onDone={handleAboutMeWipeDone}
           />

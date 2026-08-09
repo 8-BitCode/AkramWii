@@ -810,6 +810,20 @@
   pointer-events: none;
 }
 
+.mii-pop-backdrop {
+  /* This never had a base rule before - only the --in/--hold/--out
+     opacity animations below referenced it, so it was an empty 0x0 div
+     doing nothing. That's why gaps between the (transparent-background)
+     Mii PNGs showed the real page through them - there was no solid
+     layer actually behind them. This one flat, full-bleed div fixes that
+     for good, independent of node count/size/jitter - a single element,
+     so it costs nothing extra no matter how the grid above it changes. */
+  position: absolute;
+  inset: 0;
+  background: #eef0f2;
+  opacity: 0;
+}
+
 .mii-pop--in .mii-pop-backdrop {
   animation: miiPopBackdropIn 240ms ease-out both;
 }
@@ -840,13 +854,10 @@
 
 .mii-pop-mii {
   position: absolute;
-  /* Sized to match the ~12.4% (cols) / 14% (rows) spacing left between the
-     now-90 nodes (was ~3.9% across 900 nodes) - roughly 3x the old size so
-     each Mii still overlaps its neighbours enough to fully cover the
-     screen once the per-node scale (1.1-1.8x, in the keyframes below) and
-     jitter are factored in. Tune the max value up if you still spot gaps
-     on very large/ultrawide displays. */
-  width: clamp(90px, 16vw, 220px);
+  /* Sized generously so a 16x13 (208-node) grid overlaps enough to fully
+     cover the screen with no visible gaps - similar density to the
+     original 900-node version, at ~4x fewer nodes. */
+  width: clamp(120px, 20vw, 260px);
   height: auto;
   object-fit: contain;
   -webkit-user-drag: none;
@@ -860,6 +871,15 @@
 .mii-pop--in .mii-pop-mii {
   animation: miiScatterIn var(--pop-duration-in, 260ms) cubic-bezier(0.34, 1.56, 0.64, 1) both;
   animation-delay: var(--delay-in, 0ms);
+}
+
+/* Mobile gets a 9x8 (72-node) grid instead of the 16x13 (208-node) desktop
+   one - phones are the devices least able to afford a few hundred
+   individually-animated elements. The gaps between those fewer nodes are
+   proportionally wider (~1.7-1.9x), so the Miis are sized up to match and
+   still fully cover the screen with the same node-count savings. */
+.mii-pop--compact .mii-pop-mii {
+  width: clamp(110px, 34vw, 210px);
 }
 
 .mii-pop--hold .mii-pop-mii {
