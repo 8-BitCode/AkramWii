@@ -840,7 +840,13 @@
 
 .mii-pop-mii {
   position: absolute;
-  width: clamp(42px, 7vw, 78px);
+  /* Sized to match the ~12.4% (cols) / 14% (rows) spacing left between the
+     now-90 nodes (was ~3.9% across 900 nodes) - roughly 3x the old size so
+     each Mii still overlaps its neighbours enough to fully cover the
+     screen once the per-node scale (1.1-1.8x, in the keyframes below) and
+     jitter are factored in. Tune the max value up if you still spot gaps
+     on very large/ultrawide displays. */
+  width: clamp(90px, 16vw, 220px);
   height: auto;
   object-fit: contain;
   -webkit-user-drag: none;
@@ -918,41 +924,45 @@
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(60, 1fr); /* Updated to 60 columns */
-  grid-template-rows: repeat(33, 1fr);    /* Updated to 33 rows */
+  grid-template-columns: repeat(24, 1fr);
+  grid-template-rows: repeat(14, 1fr);
 }
 
 .pixel-cell {
   opacity: 0;
   transform: scale(0.1);
-  filter: brightness(1);
 }
 
+/* Perf: no more per-cell `filter` animation - filter forces its own paint
+   layer per element, which was the single most expensive thing in the app
+   across 1400 (now 336) simultaneous instances. transform + opacity are
+   compositor-only, so the browser can animate all of these on the GPU
+   without repainting. The "flash" punch this used to get from animating
+   brightness is now handled once, cheaply, by .pixel-wipe-scanbar below. */
 .pixel-wipe--in .pixel-cell {
-  animation: pixelCellIn 100ms steps(6, end) forwards; /* Faster, smoother steps */
+  animation: pixelCellIn 100ms steps(6, end) forwards;
   animation-delay: var(--delay-in);
 }
 
 .pixel-wipe--hold .pixel-cell {
   opacity: 1;
   transform: scale(1);
-  filter: brightness(1);
 }
 
 .pixel-wipe--out .pixel-cell {
-  animation: pixelCellOut 100ms steps(6, end) forwards; /* Faster, smoother steps */
+  animation: pixelCellOut 100ms steps(6, end) forwards;
   animation-delay: var(--delay-out);
 }
 
 @keyframes pixelCellIn {
-  0%   { opacity: 0; transform: scale(0.1); filter: brightness(1); }
-  40%  { opacity: 1; transform: scale(1.18); filter: brightness(2.4); }
-  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+  0%   { opacity: 0; transform: scale(0.1); }
+  40%  { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 1; transform: scale(1); }
 }
 @keyframes pixelCellOut {
-  0%   { opacity: 1; transform: scale(1); filter: brightness(1); }
-  45%  { opacity: 1; transform: scale(0.85); filter: brightness(1.9); }
-  100% { opacity: 0; transform: scale(0.1); filter: brightness(1); }
+  0%   { opacity: 1; transform: scale(1); }
+  45%  { opacity: 1; transform: scale(0.85); }
+  100% { opacity: 0; transform: scale(0.1); }
 }
 
 @keyframes pixelImpactShake {
@@ -1237,37 +1247,8 @@
   }
 }
 
-/* ---------- Smooth symmetrical wave pixel-dissolve ---------- */
-.pixel-wipe-grid {
-  display: grid;
-  grid-template-columns: repeat(50, 1fr);
-  grid-template-rows: repeat(28, 1fr);
-}
-
-.pixel-cell {
-  will-change: transform, opacity, filter;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-@keyframes pixelPop {
-  0%   { opacity: 0; transform: scale(0.1); filter: brightness(1) hue-rotate(0deg); }
-  40%  { opacity: 1; transform: scale(1.2);  filter: brightness(2.2) hue-rotate(10deg); }
-  100% { opacity: 1; transform: scale(1);    filter: brightness(1) hue-rotate(0deg); }
-}
-
-.pixel-wipe--in .pixel-cell {
-  animation: pixelPop 200ms ease-in-out forwards;
-  animation-delay: var(--delay-in);
-}
-
-.pixel-wipe--hold .pixel-cell {
-  opacity: 1;
-  transform: scale(1);
-  filter: brightness(1);
-}
-
-.pixel-wipe--out .pixel-cell {
-  animation: pixelPop 200ms ease-in-out reverse forwards;
-  animation-delay: var(--delay-out);
-}
+/* Note: this used to duplicate (and silently override, since it appears
+   later in the cascade) the .pixel-wipe-grid/.pixel-cell rules defined
+   above with a different, un-synced column count, an extra hue-rotate
+   filter animation, and a permanent `will-change`. Removed - the
+   definitions above are the single source of truth now. */

@@ -26,6 +26,7 @@ export default function Root() {
   const [done, setDone] = React.useState(false);
 
   const mainLayerRef = React.useRef(null);
+  const darkenRef = React.useRef(null);
   const warningRef = React.useRef(null);
   const ring1Ref = React.useRef(null);
   const ring2Ref = React.useRef(null);
@@ -45,12 +46,23 @@ export default function Root() {
 
     if (mainLayerRef.current) {
       const radius = p * 165;
-      // Smoother brightness curve - starts darker and reaches full brightness later
-      const brightness = lerp(0.25, 1, Math.min(1, Math.pow(p, 1.4) * 1.5));
       const scale = lerp(1.09, 1, p);
       mainLayerRef.current.style.clipPath = `circle(${radius}% at ${originX}% ${originY}%)`;
-      mainLayerRef.current.style.filter = `brightness(${brightness})`;
       mainLayerRef.current.style.transform = `scale(${scale})`;
+    }
+
+    if (darkenRef.current) {
+      // Same "starts darker, brightens later" curve the old filter:brightness()
+      // used, just expressed as a plain black overlay's opacity instead.
+      // Perf: filter forces the browser to fully repaint the entire App
+      // subtree underneath (12 tiles, their box-shadows/gradients, the
+      // pulsing tile-0 glow) on every single frame the value changes - on
+      // top of the clip-path reveal already happening that frame. Opacity
+      // on a flat, empty div is compositor-only: no repaint of anything
+      // beneath it, just a GPU blend. Same visual "dark to bright" feel,
+      // a fraction of the cost.
+      const brightness = lerp(0.25, 1, Math.min(1, Math.pow(p, 1.4) * 1.5));
+      darkenRef.current.style.opacity = String(clamp(1 - brightness, 0, 1));
     }
 
     if (warningRef.current) {
@@ -241,6 +253,7 @@ export default function Root() {
     <div className="root-stage">
       <div className="main-layer" ref={mainLayerRef}>
         <App />
+        {!done && <div className="reveal-darken" ref={darkenRef} aria-hidden="true" />}
       </div>
 
       {!done && (

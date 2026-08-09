@@ -185,11 +185,19 @@ function CameraApertureTransition({ active, onCovered, onDone }) {
 }
 
 /* ---------- Mii-scatter transition (About Me channel only) ---------- */
-const MII_POP_COLS = 30; 
-const MII_POP_ROWS = 30;
+// Perf note: this used to be a 30x30 (900-node) grid. Each node is an <img>
+// with its own filter/transform animation and staggered delay, so 900 of
+// them meant 900 individually-tracked CSS animations + paints every time
+// the About Me channel opened or closed - by far the heaviest transition
+// in the app. Dropping to 10x9 (90 nodes, a 10x reduction) keeps the same
+// "swarm" look at this screen size while cutting that cost by ~90%. The
+// per-node stagger step is scaled up 10x (1ms -> 10ms) so the overall
+// in/out duration - and therefore the visual timing/feel - stays the same.
+const MII_POP_COLS = 10;
+const MII_POP_ROWS = 9;
 const MII_POP_COUNT = MII_POP_COLS * MII_POP_ROWS;
-const MII_POP_STEP_IN = 1; 
-const MII_POP_STEP_OUT = 1;
+const MII_POP_STEP_IN = 10;
+const MII_POP_STEP_OUT = 10;
 const MII_POP_DURATION_IN = 260;
 const MII_POP_DURATION_OUT = 220;
 const MII_POP_IN_MS = (MII_POP_COUNT - 1) * MII_POP_STEP_IN + MII_POP_DURATION_IN + 40;
@@ -213,8 +221,8 @@ function MiiPopulateTransition({ active, onCovered, onDone }) {
       const col = i % MII_POP_COLS;
       const row = Math.floor(i / MII_POP_COLS);
 
-      const baseX = (col / (MII_POP_COLS - 1)) * 112 - 6; 
-      const baseY = (row / (MII_POP_ROWS - 1)) * 112 - 6; 
+      const baseX = (col / (MII_POP_COLS - 1)) * 118 - 9; 
+      const baseY = (row / (MII_POP_ROWS - 1)) * 118 - 9; 
 
       const jitterX = (Math.random() - 0.5) * 5;
       const jitterY = (Math.random() - 0.5) * 5;
@@ -305,8 +313,18 @@ function MiiPopulateTransition({ active, onCovered, onDone }) {
 /* ============================================================
    SMOOTH SYMMETRICAL WAVE PIXEL-DISSOLVE (Portfolio channel)
    ============================================================ */
-const PIXEL_COLS = 50;
-const PIXEL_ROWS = 28;
+// Perf note: this used to be a 50x28 (1400-node) grid, with each cell
+// running its own `filter: brightness()` keyframe animation. `filter` can't
+// be cheaply composited the way `transform`/`opacity` can - the browser has
+// to rasterize every single one of those 1400 elements as its own paint
+// layer, every time the Portfolio channel opened or closed. That was the
+// single most expensive thing happening anywhere in the app. Dropping to
+// 24x14 (336 nodes, a ~4x reduction) plus removing the per-cell `filter`
+// animation (see DiscChannel.css) keeps the same 8-bit dissolve look at a
+// fraction of the cost. Timing is unaffected since delays are based on each
+// cell's normalized distance from center, not the total cell count.
+const PIXEL_COLS = 24;
+const PIXEL_ROWS = 14;
 const WAVE_DURATION_MS = 800;
 const CELL_ANIM_MS = 200;
 const HOLD_MS = 250;          // minimum hold once fully covered

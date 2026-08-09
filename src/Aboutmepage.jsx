@@ -169,7 +169,12 @@ const createBrainTextures = () => {
 };
 
 const createBrainGeometry = (radius) => {
-  const geometry = new THREE.SphereGeometry(radius, 128, 128);
+  // 64x64 instead of 128x128: a quarter of the vertices for the per-vertex
+  // wrinkle-math loop below to churn through. At the 240-340px canvas size
+  // this renders at, the bump map (not raw geometry) carries the visible
+  // detail, so this is very hard to tell apart from 128x128 - but it's 4x
+  // less CPU work blocking the main thread on every mount.
+  const geometry = new THREE.SphereGeometry(radius, 64, 64);
   const posAttr = geometry.attributes.position;
   const v = new THREE.Vector3();
   const dir = new THREE.Vector3();
@@ -245,14 +250,42 @@ const renderMarkerIcon = (idx) => {
   }
 };
 
+// Perf note: createBrainTextures() paints two 1024x512 canvases from
+// scratch (gradients + ~90 random blotches + hand-drawn fold curves), and
+// createBrainGeometry() runs a per-vertex trig loop over every vertex of a
+// sphere. Both are pure functions of nothing (textures) or just `radius`
+// (geometry - and radius only ever takes one of two values, mobile/desktop).
+// Previously these ran inside useMemo with an empty/radius dep array, which
+// only protects against re-runs while GlobeMesh stays mounted - but
+// GlobeMesh fully unmounts every time you leave the About Me channel and
+// remounts every time you come back, so in practice this expensive setup
+// was re-done on *every single visit* to the channel, right as the
+// transition was trying to reveal the page. Caching at module scope means
+// it's built once per radius, ever, for the lifetime of the tab.
+const brainTexturesCache = new Map();
+const getBrainTextures = () => {
+  if (!brainTexturesCache.has('shared')) {
+    brainTexturesCache.set('shared', createBrainTextures());
+  }
+  return brainTexturesCache.get('shared');
+};
+
+const brainGeometryCache = new Map();
+const getBrainGeometry = (radius) => {
+  if (!brainGeometryCache.has(radius)) {
+    brainGeometryCache.set(radius, createBrainGeometry(radius));
+  }
+  return brainGeometryCache.get(radius);
+};
+
 const GlobeMesh = ({ nodes, activeFactIndex, setActiveFactIndex, isMobile }) => {
   const globeRef = useRef();
   const sphereRef = useRef();
 
   const globeRadius = isMobile ? 0.95 : 1.05;
 
-  const { colorMap, bumpMap } = useMemo(() => createBrainTextures(), []);
-  const brainGeometry = useMemo(() => createBrainGeometry(globeRadius), [globeRadius]);
+  const { colorMap, bumpMap } = useMemo(() => getBrainTextures(), []);
+  const brainGeometry = useMemo(() => getBrainGeometry(globeRadius), [globeRadius]);
 
   useFrame(() => {
     if (globeRef.current) {

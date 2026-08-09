@@ -14,11 +14,25 @@
   position: absolute;
   inset: 0;
   clip-path: circle(0% at 50% 90%);
-  will-change: clip-path, filter, transform;
+  will-change: clip-path, transform;
 }
 
 .main-layer.done {
   clip-path: none;
+}
+
+/* Replaces the old filter:brightness() animation on .main-layer itself -
+   a plain black div whose opacity fades is compositor-only (no repaint of
+   the App underneath), where filter forced a full repaint of it every
+   frame. Sits inside .main-layer so it's clipped by the same reveal
+   circle automatically. */
+.reveal-darken {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 1;
+  will-change: opacity;
 }
 
 .warning-layer {
