@@ -5,8 +5,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "prestart": "node scripts/patch-godot-wasm-url.js",
     "start": "vite",
     "preview": "vite preview",
+    "prebuild": "node scripts/patch-godot-wasm-url.js",
     "build": "vite build",
     "postbuild": "rm -f dist/portfolio.wasm"
   },
