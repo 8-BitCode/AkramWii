@@ -139,13 +139,13 @@ const BottomBar = ({ isMobile, theme = 'earthbound' }) => {
 
           else if (logText.includes('PHONE:email')) {
             const email = logText.substring(logText.indexOf('PHONE:email:') + 12);
-            setMessage(<span>Email: <a href={`mailto:${email}`} style={{ color: isWii ? '#1a8a9a' : '#6bd6bd', textDecoration: 'underline' }}>{email}</a></span>);
+            setMessage(<span>Email: <a href={`mailto:${email}`} style={{ color: '#10F868', textDecoration: 'underline' }}>{email}</a></span>);
           } else if (logText.includes('PHONE:github')) {
             const github = logText.substring(logText.indexOf('PHONE:github:') + 13);
-            setMessage(<span>GitHub: <a href={github} target="_blank" rel="noopener noreferrer" style={{ color: isWii ? '#1a8a9a' : '#6bd6bd', textDecoration: 'underline' }}>{github}</a></span>);
+            setMessage(<span>GitHub: <a href={github} target="_blank" rel="noopener noreferrer" style={{ color: '#10F868', textDecoration: 'underline' }}>{github}</a></span>);
           } else if (logText.includes('PHONE:linkedin')) {
             const linkedin = logText.substring(logText.indexOf('PHONE:linkedin:') + 15);
-            setMessage(<span>LinkedIn: <a href={linkedin} target="_blank" rel="noopener noreferrer" style={{ color: isWii ? '#1a8a9a' : '#6bd6bd', textDecoration: 'underline' }}>{linkedin}</a></span>);
+            setMessage(<span>LinkedIn: <a href={linkedin} target="_blank" rel="noopener noreferrer" style={{ color: '#10F868', textDecoration: 'underline' }}>{linkedin}</a></span>);
           }
 
           else if (logText.includes('CV:reading:start')) {
@@ -205,13 +205,13 @@ const BottomBar = ({ isMobile, theme = 'earthbound' }) => {
     minHeight: '72px',
     boxSizing: 'border-box',
   } : {
-    background: '#2a1610',
+    background: '#3a5650',               /* panel – replaces #2a1610 */
     borderStyle: 'solid',
     borderWidth: '10px',
-    borderColor: '#140a08 #a8583f #a8583f #140a08',
+    borderColor: '#303030 #10F868 #10F868 #303030',  /* void / neon edges */
     borderRadius: '0px',
     boxShadow: `
-      inset 8px 8px 0 #1c0f0a,
+      inset 8px 8px 0 #303030,           /* deep shadow recess */
       0 8px 18px rgba(0,0,0,0.5)
     `,
     display: 'flex',
@@ -232,10 +232,10 @@ const BottomBar = ({ isMobile, theme = 'earthbound' }) => {
   } : {
     width: '54px', height: '54px', flexShrink: 0,
     boxSizing: 'border-box',
-    background: '#3d2418', 
+    background: '#507870',              /* stone tone – replaces #3d2418 */
     borderStyle: 'solid',
     borderWidth: '4px',
-    borderColor: '#140a08 #a8583f #a8583f #140a08',
+    borderColor: '#303030 #10F868 #10F868 #303030',
     borderRadius: '0px',
     boxShadow: '0 3px 6px rgba(0,0,0,0.4)',
     overflow: 'hidden',
@@ -251,14 +251,14 @@ const BottomBar = ({ isMobile, theme = 'earthbound' }) => {
     flex: 1,
     fontFamily: 'Earthbound, "Press Start 2P", monospace',
     fontSize: 'clamp(11px, 1.1vw, 15px)',
-    color: '#ffefad',
+    color: '#e4f2e9',                    /* cream → light mint for readability */
     lineHeight: 1.7,
   };
 
   const cursorStyle = {
     animation: 'blink 0.6s step-end infinite',
     marginLeft: '2px',
-    color: isWii ? '#1a8a9a' : undefined,
+    color: isWii ? '#1a8a9a' : '#10F868',  /* neon cursor */
   };
 
   return (

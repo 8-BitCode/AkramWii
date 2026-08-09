@@ -5,6 +5,7 @@ import GodotGame from "./GodotGame";
 import RetroFrame from "./RetroFrame";
 import BottomBar from "./BottomBar";
 import AutoFitScale from "./Autofitscale";
+import sound from "./SoundManager"; // <-- Import sound manager
 
 const TOTAL_SECRETS = 4;
 
@@ -20,7 +21,7 @@ const HudPlaque = ({ icon, title, children }) => (
   </div>
 );
 
-export default function GamePage({ onGoBack, onEscape }) {
+export default function GamePage({ onGoBack, onEscape, onGameReady }) {
   const [isMobile, setIsMobile] = useState(
     () => window.matchMedia('(max-width: 600px)').matches
   );
@@ -29,6 +30,14 @@ export default function GamePage({ onGoBack, onEscape }) {
   const [foundItems, setFoundItems] = useState(new Set());
   const gameContainerRef = useRef(null);
   const gameInnerRef = useRef(null);
+
+  // --- Stop Wii menu music while this page is displayed; restore on exit ---
+  useEffect(() => {
+    sound.stopMusic();                 // Stop the Wii menu loop
+    return () => {
+      sound.playMusic('wiiMenu');      // Resume Wii menu when leaving
+    };
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 600px)');
@@ -89,7 +98,7 @@ export default function GamePage({ onGoBack, onEscape }) {
           <div className="game-page-stage-overlay-text">Click twice to activate</div>
         </div>
       )}
-      <GodotGame isActive={isGameFocused && isGameActive} innerRef={gameInnerRef} isMobile={isMobile} />
+      <GodotGame isActive={isGameFocused && isGameActive} innerRef={gameInnerRef} isMobile={isMobile} onReady={onGameReady} />
     </div>
   );
 

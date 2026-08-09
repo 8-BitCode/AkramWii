@@ -10,37 +10,96 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./Akrampage.css";
+import sound from "./SoundManager";
 
-/* ---------- a single achievement node + its detail card ---------- */
-function TreeNode({ id, setRef, revealed, icon, tone = "green", title, meta, pill, text, mutedText, chips }) {
+/* ---------- small lock glyph shown on any node before it's tapped ---------- */
+function LockIcon() {
   return (
-    <div className="akram-tree-item" ref={setRef} data-reveal-id={id}>
-      <div className={`akram-tree-node akram-tree-node--${tone} ${revealed ? "is-in" : ""}`}>
-        <span className="akram-tree-node-icon" aria-hidden="true">{icon}</span>
-      </div>
-      <div className={`akram-tree-card ${revealed ? "is-in" : ""}`}>
-        <h2>{title}</h2>
-        {pill && <span className="akram-card-pill">{pill}</span>}
-        {meta && <span className="akram-card-meta">{meta}</span>}
-        {text && <p className="akram-card-text">{text}</p>}
-        {mutedText && <p className="akram-card-text akram-card-text--muted">{mutedText}</p>}
-        {chips && chips.length > 0 && (
-          <div className="akram-card-chips">
-            {chips.map((c) => (
-              <span className="akram-chip" key={c}>{c}</span>
-            ))}
-          </div>
+    <svg viewBox="0 0 24 24" className="akram-lock-icon" aria-hidden="true">
+      <rect x="5" y="10.5" width="14" height="9.5" rx="2.2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" fill="none" />
+    </svg>
+  );
+}
+
+/* ---------- a single achievement node + its detail card ----------
+   Starts locked (dim, tappable). Tapping it reveals the node's real
+   icon/colour and pops its card in, same "unlocked" pop language used
+   everywhere else in the tree. */
+function TreeNode({ id, revealed, unlockable, onReveal, onCenter, icon, tone = "green", title, meta, pill, text, mutedText, chips }) {
+  const handleClick = () => {
+    if (!revealed && unlockable) {
+      sound.play("homeMenuClose");
+      onReveal(id);
+      onCenter?.(id);
+    }
+  };
+  const stateClass = revealed
+    ? "is-in akram-tree-node--pop-in"
+    : unlockable
+    ? "akram-tree-node--locked"
+    : "akram-tree-node--inert";
+  const cardStateClass = revealed ? "is-in" : unlockable ? "akram-tree-card--locked" : "akram-tree-card--inert";
+  return (
+    <div className="akram-tree-item" data-node-id={id}>
+      <button
+        type="button"
+        className={`akram-tree-node akram-tree-node--${tone} ${stateClass}`}
+        onClick={handleClick}
+        disabled={!unlockable}
+        aria-label={revealed ? title : unlockable ? "Press node to unlock" : "Locked"}
+      >
+        {!revealed && unlockable && (
+          <span className="akram-tap-hint" aria-hidden="true">
+            <span className="akram-tap-hint-label">Click</span>
+            <svg viewBox="0 0 24 24" className="akram-tap-hint-arrow">
+              <path
+                d="M12 4v13M12 17l-5-5M12 17l5-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        )}
+        <span className="akram-tree-node-icon" aria-hidden="true">
+          {revealed ? icon : <LockIcon />}
+        </span>
+      </button>
+      <div className={`akram-tree-card ${cardStateClass}`}>
+        {revealed ? (
+          <>
+            <h2>{title}</h2>
+            {pill && <span className="akram-card-pill">{pill}</span>}
+            {meta && <span className="akram-card-meta">{meta}</span>}
+            {text && <p className="akram-card-text">{text}</p>}
+            {mutedText && <p className="akram-card-text akram-card-text--muted">{mutedText}</p>}
+            {chips && chips.length > 0 && (
+              <div className="akram-card-chips">
+                {chips.map((c) => (
+                  <span className="akram-chip" key={c}>{c}</span>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="akram-card-text akram-card-text--muted">
+            {unlockable ? "Press node to unlock." : "Locked."}
+          </p>
         )}
       </div>
     </div>
   );
 }
 
-/* ---------- the root node, at the very bottom of the tree ---------- */
-function RootNode({ id, setRef, revealed }) {
+/* ---------- the root node, at the very bottom of the tree ----------
+   Already unlocked when the page loads - it's the start of the story. */
+function RootNode({ revealed }) {
   return (
-    <div className="akram-tree-item akram-tree-item--root" ref={setRef} data-reveal-id={id}>
-      <div className={`akram-tree-node akram-tree-node--root ${revealed ? "is-in" : ""}`}>
+    <div className="akram-tree-item akram-tree-item--root">
+      <div className={`akram-tree-node akram-tree-node--root ${revealed ? "is-in akram-tree-node--pop-in" : ""}`}>
         <span className="akram-tree-node-icon" aria-hidden="true">★</span>
       </div>
       <div className={`akram-tree-card ${revealed ? "is-in" : ""}`}>
@@ -66,7 +125,7 @@ const CHARGE_MESSAGES = [
   "3… 2… 1…",
 ];
 
-function EmploymentNode({ id, setRef, revealed, onShakeStart, onShakeEnd }) {
+function EmploymentNode({ unlockable, onShakeStart, onShakeEnd, onCenter }) {
   const [stage, setStage] = React.useState("locked"); // locked -> shaking -> burst -> revealed
   const stageRef = React.useRef(stage);
   React.useEffect(() => {
@@ -82,7 +141,10 @@ function EmploymentNode({ id, setRef, revealed, onShakeStart, onShakeEnd }) {
     () => () => {
       timeoutsRef.current.forEach(clearTimeout);
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (stageRef.current === "shaking") onShakeEnd?.();
+      if (stageRef.current === "shaking") {
+        sound.unduckMusic();
+        onShakeEnd?.();
+      }
     },
     []
   );
@@ -134,16 +196,21 @@ function EmploymentNode({ id, setRef, revealed, onShakeStart, onShakeEnd }) {
   );
 
   const handleClick = () => {
-    if (stage !== "locked") return;
+    if (stage !== "locked" || !unlockable) return;
+    sound.play("homeMenuClose");
     const rect = buttonRef.current?.getBoundingClientRect();
     if (rect) {
       setOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
     }
     setStage("shaking");
+    sound.duckMusic(0.12);
+    sound.playMusicOneShot('buildup');
     onShakeStart?.();
+    onCenter?.("employment");
     timeoutsRef.current.push(
       setTimeout(() => {
         setStage("burst");
+        sound.unduckMusic();
         onShakeEnd?.();
       }, SHAKE_MS),
       setTimeout(() => setStage("revealed"), SHAKE_MS + BURST_MS)
@@ -160,15 +227,22 @@ function EmploymentNode({ id, setRef, revealed, onShakeStart, onShakeEnd }) {
   });
 
   return (
-    <div className="akram-tree-item" ref={setRef} data-reveal-id={id}>
+    <div className="akram-tree-item" data-node-id="employment">
       <button
         type="button"
         ref={buttonRef}
-        className={`akram-tree-node akram-tree-node--employment akram-tree-node--${stage} ${revealed ? "is-in" : ""}`}
+        className={`akram-tree-node akram-tree-node--employment akram-tree-node--${stage} ${
+          stage === "locked" && !unlockable ? "akram-tree-node--inert" : ""
+        } ${stage === "locked" && unlockable ? "akram-tree-node--attention" : ""} ${stage !== "locked" ? "is-in" : ""}`}
         onClick={handleClick}
-        disabled={stage !== "locked"}
-        aria-label="Reveal employment status"
+        disabled={!unlockable}
+        aria-label={unlockable ? "Press node to unlock employment status" : "Locked"}
       >
+        {stage === "locked" && unlockable && (
+          <span className="akram-employment-callout" aria-hidden="true">
+            🔓 Tap to Reveal Employment Status
+          </span>
+        )}
         {stage === "burst" || stage === "revealed" ? (
           <span className="akram-tree-node-burst" aria-hidden="true" />
         ) : (
@@ -195,12 +269,20 @@ function EmploymentNode({ id, setRef, revealed, onShakeStart, onShakeEnd }) {
           document.body
         )}
 
-      <div className={`akram-tree-card akram-tree-card--employment ${revealed ? "is-in" : ""}`}>
+      <div
+        className={`akram-tree-card akram-tree-card--employment ${
+          stage === "revealed"
+            ? "is-in"
+            : stage !== "locked" || unlockable
+            ? "akram-tree-card--locked"
+            : "akram-tree-card--inert"
+        }`}
+      >
         {stage !== "revealed" ? (
           <>
             <h2>Employment Status</h2>
             <p className="akram-card-text akram-card-text--muted">
-              {stage === "locked" ? "Tap the node to find out." : CHARGE_MESSAGES[chargeIndex]}
+              {stage === "locked" ? (unlockable ? "Press node to unlock." : "Locked.") : CHARGE_MESSAGES[chargeIndex]}
             </p>
           </>
         ) : (
@@ -228,11 +310,73 @@ function EmploymentNode({ id, setRef, revealed, onShakeStart, onShakeEnd }) {
 export default function AkramPage({ onGoBack, onEscape }) {
   const scrollRef = React.useRef(null);
   const gridRef = React.useRef(null);
-  const nodeRefs = React.useRef({});
-  const [revealedIds, setRevealedIds] = React.useState(() => new Set());
+  const [revealedIds, setRevealedIds] = React.useState(() => new Set(["core"]));
   const [screenShaking, setScreenShaking] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(
     () => window.matchMedia('(max-width: 600px)').matches
+  );
+  const scrollAnimRef = React.useRef(null);
+
+  // Custom eased scroll animation - gives us a slower, more deliberate glide
+  // than the browser's native "smooth" (and lets us cancel/replace it if the
+  // person taps another node mid-flight).
+  const smoothScrollTo = React.useCallback((targetTop, duration = 1000) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current);
+
+    const maxScroll = Math.max(0, el.scrollHeight - el.clientHeight);
+    const clampedTarget = Math.max(0, Math.min(maxScroll, targetTop));
+    const startTop = el.scrollTop;
+    const distance = clampedTarget - startTop;
+    const startTime = performance.now();
+    const prevBehavior = el.style.scrollBehavior;
+    el.style.scrollBehavior = "auto"; // avoid double-animating against CSS scroll-behavior: smooth
+
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      el.scrollTop = startTop + distance * easeInOutCubic(t);
+      if (t < 1) {
+        scrollAnimRef.current = requestAnimationFrame(step);
+      } else {
+        scrollAnimRef.current = null;
+        el.style.scrollBehavior = prevBehavior;
+      }
+    };
+    scrollAnimRef.current = requestAnimationFrame(step);
+  }, []);
+
+  // Center a just-tapped node's text card in the viewport. We wait a beat
+  // so the reveal/pop-in state has actually landed in the DOM (the card
+  // grows in height when it unlocks), otherwise we'd centre the old,
+  // collapsed layout instead of the final one.
+  const scrollToNode = React.useCallback(
+    (id) => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = scrollRef.current;
+          const target = el?.querySelector(`[data-node-id="${id}"]`);
+          if (!el || !target) return;
+          const elRect = el.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          const targetTopWithinScroll = targetRect.top - elRect.top + el.scrollTop;
+          const targetCenter = targetTopWithinScroll + targetRect.height / 2;
+          const desiredScrollTop = targetCenter - el.clientHeight / 2;
+          smoothScrollTo(desiredScrollTop);
+        }, 80);
+      });
+    },
+    [smoothScrollTo]
+  );
+
+  React.useEffect(
+    () => () => {
+      if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current);
+    },
+    []
   );
 
   // Detect mobile
@@ -243,8 +387,22 @@ export default function AkramPage({ onGoBack, onEscape }) {
     return () => mq.removeEventListener('change', handleChange);
   }, []);
 
-  const makeSetRef = (id) => (el) => {
-    if (el) nodeRefs.current[id] = el;
+  // Background music for this page - swaps in on mount, hands back to
+  // whatever was playing before (the Wii menu loop) on the way out.
+  React.useEffect(() => {
+    sound.playMusic('akramExperience');
+    return () => sound.playMusic('wiiMenu');
+  }, []);
+
+  // Reveal a node on tap - each node is tapped individually now, instead
+  // of auto-unlocking as it scrolls into view.
+  const handleReveal = (id) => {
+    setRevealedIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
   };
 
   // A field of small blue "Wii Channel" bubbles that drift upward the
@@ -280,36 +438,15 @@ export default function AkramPage({ onGoBack, onEscape }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, []);
 
-  React.useEffect(() => {
-    const root = scrollRef.current;
-    if (!root) return undefined;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        setRevealedIds((prev) => {
-          let changed = false;
-          const next = new Set(prev);
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const id = entry.target.getAttribute("data-reveal-id");
-              if (id && !next.has(id)) {
-                next.add(id);
-                changed = true;
-                observer.unobserve(entry.target);
-              }
-            }
-          });
-          return changed ? next : prev;
-        });
-      },
-      { root, threshold: 0.4, rootMargin: "0px 0px -8% 0px" }
-    );
-
-    Object.values(nodeRefs.current).forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
+  // Nodes unlock strictly in order, bottom to top - each one becomes
+  // tappable only once the node before it has been revealed. "core"
+  // (the root, bottom-most node) starts revealed already.
   const ORDER = ["core", "hackathon", "pass", "graphics", "employment"];
+  const isUnlockable = (id) => {
+    const idx = ORDER.indexOf(id);
+    if (idx <= 0) return true;
+    return revealedIds.has(ORDER[idx - 1]);
+  };
   const revealedCount = ORDER.filter((id) => revealedIds.has(id)).length;
   const progressPct = Math.max(0, ((revealedCount - 1) / (ORDER.length - 1)) * 100);
 
@@ -395,19 +532,20 @@ export default function AkramPage({ onGoBack, onEscape }) {
 
           <div className="akram-tree-list">
             <EmploymentNode
-              id="employment"
-              setRef={makeSetRef("employment")}
-              revealed={revealedIds.has("employment")}
+              unlockable={isUnlockable("employment")}
               onShakeStart={() => setScreenShaking(true)}
               onShakeEnd={() => setScreenShaking(false)}
+              onCenter={scrollToNode}
             />
 
             <div className="akram-tree-gap" />
 
             <TreeNode
               id="graphics"
-              setRef={makeSetRef("graphics")}
               revealed={revealedIds.has("graphics")}
+              unlockable={isUnlockable("graphics")}
+              onReveal={handleReveal}
+              onCenter={scrollToNode}
               icon="🖌️"
               tone="green"
               title="Graphics Lead, UNICS"
@@ -419,8 +557,10 @@ export default function AkramPage({ onGoBack, onEscape }) {
 
             <TreeNode
               id="pass"
-              setRef={makeSetRef("pass")}
               revealed={revealedIds.has("pass")}
+              unlockable={isUnlockable("pass")}
+              onReveal={handleReveal}
+              onCenter={scrollToNode}
               icon="🎓"
               tone="green"
               title="PASS Leader, Peer Support"
@@ -433,8 +573,10 @@ export default function AkramPage({ onGoBack, onEscape }) {
 
             <TreeNode
               id="hackathon"
-              setRef={makeSetRef("hackathon")}
               revealed={revealedIds.has("hackathon")}
+              unlockable={isUnlockable("hackathon")}
+              onReveal={handleReveal}
+              onCenter={scrollToNode}
               icon="🎮"
               tone="green"
               title="StudentHack2025 — Desktopia"
@@ -446,7 +588,7 @@ export default function AkramPage({ onGoBack, onEscape }) {
 
             <div className="akram-tree-gap" />
 
-            <RootNode id="core" setRef={makeSetRef("core")} revealed={revealedIds.has("core")} />
+            <RootNode revealed={revealedIds.has("core")} />
           </div>
         </div>
       </div>

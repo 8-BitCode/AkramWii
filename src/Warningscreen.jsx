@@ -1,4 +1,4 @@
-/* WarningScreen.jsx */
+/* WarningScreen.jsx — Simple epilepsy & volume warning */
 import React from "react";
 import "./Warningscreen.css";
 
@@ -18,21 +18,21 @@ export default function WarningScreen() {
             <rect x="45.5" y="30" width="9" height="26" rx="3.5" fill="#111" />
             <circle cx="50" cy="68" r="5" fill="#111" />
           </svg>
-          <h1>WARNING&nbsp;-&nbsp;HEALTH AND SAFETY</h1>
+          <h1>WARNING — EPILEPSY &amp; AUDIO</h1>
         </div>
 
         <p className="warning-text">
-          BEFORE PLAYING, READ YOUR OPERATIONS
+          This portfolio contains flashing lights, rapid colour changes,
           <br />
-          MANUAL FOR IMPORTANT INFORMATION
-          <br />
-          ABOUT YOUR HEALTH AND SAFETY.
+          and animated patterns. Please be cautious if you are photosensitive.
         </p>
 
         <p className="warning-online">
-          Also online at
-          <br />
-          <span className="warning-link">www.nintendo.com/healthsafety/</span>
+          For the full experience, please turn up your volume.
+        </p>
+
+        <p className="warning-fun">
+          {'and have fun <3'}
         </p>
 
         <div className="warning-continue">

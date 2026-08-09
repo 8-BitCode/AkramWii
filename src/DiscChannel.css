@@ -897,12 +897,11 @@
   z-index: 50;
   overflow: hidden;
   pointer-events: none;
-  background: #36262f;
-  /* Only needed while the mosaic is still filling in and there's nothing
-     underneath ready to show yet. Once fully covered, this fades away so
-     the GamePage (already revealed at that exact moment, fully hidden
-     behind the opaque cells) is what shows through as the cells dissolve
-     back out — instead of the wipe's own backdrop. */
+  background: transparent;
+  /* Transparent throughout, including while the mosaic is still filling in -
+     the disc channel preview (gif/video) is still visible underneath at that
+     point, so the pixel cells wipe in directly over it instead of over a
+     solid backdrop colour. */
   transition: background-color 120ms linear;
 }
 
@@ -1011,7 +1010,7 @@
 .pixel-wipe-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle, transparent 55%, rgba(54, 38, 47, 0.55) 100%);
+  background: radial-gradient(circle, rgba(54, 38, 47, 0.18) 55%, rgba(54, 38, 47, 0.55) 100%);
   opacity: 0;
 }
 

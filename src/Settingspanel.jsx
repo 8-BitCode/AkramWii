@@ -2,6 +2,7 @@
 import React from "react";
 import "./Mailpopup.css";
 import "./Settingspanel.css";
+import sound from "./SoundManager";
 
 const DURATION = 560;
 const EASE = "cubic-bezier(0.22, 1.12, 0.3, 1)";
@@ -17,7 +18,10 @@ function Toggle({ label, checked, onChange }) {
         aria-checked={checked}
         aria-label={label}
         className={`settings-toggle ${checked ? "on" : "off"}`}
-        onClick={() => onChange(!checked)}
+        onClick={() => {
+          sound.play('select');
+          onChange(!checked);
+        }}
       >
         <span className="settings-toggle-knob" />
       </button>
@@ -57,7 +61,10 @@ function Segmented({ label, options, value, onChange }) {
             key={opt.value}
             type="button"
             className={`settings-segment ${value === opt.value ? "active" : ""}`}
-            onClick={() => onChange(opt.value)}
+            onClick={() => {
+              if (value !== opt.value) sound.play('select');
+              onChange(opt.value);
+            }}
             aria-pressed={value === opt.value}
           >
             {opt.label}
@@ -204,6 +211,7 @@ export default function SettingsPanel({
 
   const handleReset = () => {
     if (resetting) return;
+    sound.play('select');
     setResetting(true);
     onReset?.();
     window.setTimeout(() => setResetting(false), 500);
@@ -282,12 +290,16 @@ export default function SettingsPanel({
           <button
             className="mail-popup-btn mail-popup-btn--back"
             type="button"
-            onClick={() => !closing && onRequestClose?.()}
+            onClick={() => {
+              if (closing) return;
+              sound.play('back');
+              onRequestClose?.();
+            }}
             disabled={closing}
           >
             Back
           </button>
-          <span className="mail-popup-wii">Wii</span>
+          <span className="mail-popup-wii">Having fun setting up?</span>
           <span className="settings-bottombar-spacer" aria-hidden="true" />
         </div>
       </div>

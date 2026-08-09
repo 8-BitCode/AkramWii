@@ -119,3 +119,19 @@
     animation: none;
   }
 }
+
+.warning-epilepsy {
+  color: #ffcc66;
+  font-weight: bold;
+  background: rgba(255, 0, 0, 0.08);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #ff4444;
+}
+
+.warning-title {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: clamp(20px, 3.2vw, 34px);
+  letter-spacing: 1px;
+  margin: 0;
+}

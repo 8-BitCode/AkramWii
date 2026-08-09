@@ -364,6 +364,7 @@
 }
 
 .akram-tree-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -373,6 +374,115 @@
 
 .akram-tree-item--root {
   padding-bottom: 4px;
+}
+
+/* ---------- "click me" hint above the currently-unlockable node ----------
+   A small bobbing arrow + label sits above whichever node is next in
+   line, so it's obvious where to tap. Disappears once revealed. */
+.akram-tap-hint {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 2;
+  animation: akram-tap-hint-bob 1.5s ease-in-out infinite;
+}
+
+.akram-tap-hint-label {
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: #1c8aa0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(53, 195, 219, 0.4);
+  white-space: nowrap;
+}
+
+.akram-tap-hint-arrow {
+  width: 14px;
+  height: 14px;
+  color: #35c3db;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+}
+
+@keyframes akram-tap-hint-bob {
+  0%, 100% { transform: translate(-50%, 0); opacity: 1; }
+  50% { transform: translate(-50%, 7px); opacity: 0.55; }
+}
+
+/* ---------- livelier reveal: the node pops with a little overshoot +
+   spin, plus two rings burst outward from it, instead of a flat fade ---------- */
+.akram-tree-node--pop-in {
+  animation: akram-node-unlock-pop 640ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.akram-tree-node--pop-in::after,
+.akram-tree-node--pop-in::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2px solid rgba(63, 182, 78, 0.55);
+  opacity: 0;
+  animation: akram-unlock-ring 640ms ease-out both;
+}
+
+.akram-tree-node--pop-in::before {
+  border-color: rgba(53, 195, 219, 0.5);
+  animation-delay: 90ms;
+}
+
+.akram-tree-node--root.akram-tree-node--pop-in::after,
+.akram-tree-node--root.akram-tree-node--pop-in::before {
+  border-color: rgba(53, 195, 219, 0.55);
+}
+
+@keyframes akram-node-unlock-pop {
+  0% { transform: scale(0.55) rotate(-14deg); filter: brightness(1.5) saturate(1.4); }
+  50% { transform: scale(1.22) rotate(8deg); }
+  72% { transform: scale(0.93) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); filter: none; }
+}
+
+@keyframes akram-unlock-ring {
+  0% { transform: scale(0.8); opacity: 0.95; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Cards get a touch more life on reveal too - a small overshoot instead
+   of a flat fade-up. */
+.akram-tree-card.is-in {
+  animation: akram-card-pop-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes akram-card-pop-in {
+  0% { opacity: 0; transform: translateY(16px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(-3px) scale(1.015); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akram-tap-hint {
+    animation: none !important;
+  }
+  .akram-tree-node--pop-in,
+  .akram-tree-node--pop-in::after,
+  .akram-tree-node--pop-in::before,
+  .akram-tree-card.is-in {
+    animation: none !important;
+  }
+  .akram-tree-node--attention,
+  .akram-employment-callout {
+    animation: none !important;
+  }
 }
 
 /* ---------- node orb ---------- */
@@ -413,6 +523,58 @@
 .akram-tree-node--green {
   background: radial-gradient(circle at 35% 28%, #ffffff 0%, #dcf3df 55%, #a9dcae 100%);
   box-shadow: 0 0 0 4px #3fb64e, inset 0 2px 4px rgba(255, 255, 255, 0.75), 0 0 22px rgba(63, 182, 78, 0.28);
+}
+
+/* ---------- locked / not-yet-tapped nodes ----------
+   Every node starts here, dim and waiting: visible (so the person
+   knows where to tap) but greyed out, with a slow pulse to invite the
+   click. Tapping swaps this out for the node's real --root/--green
+   colour and plays the existing pop-in (via .is-in). */
+.akram-tree-node--locked {
+  opacity: 1;
+  transform: scale(1);
+  cursor: pointer;
+  background: radial-gradient(circle at 35% 28%, #fbfbfc 0%, #e7e9ec 55%, #cfd2d8 100%);
+  box-shadow: 0 0 0 4px #babec5, inset 0 2px 4px rgba(255, 255, 255, 0.7), 0 0 14px rgba(53, 195, 219, 0.12);
+  animation: akram-locked-pulse 2.6s ease-in-out infinite;
+}
+
+.akram-tree-node--locked:hover,
+.akram-tree-node--locked:focus-visible {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 4px #35c3db, inset 0 2px 4px rgba(255, 255, 255, 0.75), 0 0 22px rgba(53, 195, 219, 0.4);
+}
+
+.akram-tree-node--locked:active {
+  transform: scale(0.94);
+}
+
+.akram-tree-node--locked .akram-lock-icon {
+  stroke: #8b8f96;
+}
+
+@keyframes akram-locked-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px #babec5, inset 0 2px 4px rgba(255, 255, 255, 0.7), 0 0 14px rgba(53, 195, 219, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 4px #babec5, inset 0 2px 4px rgba(255, 255, 255, 0.7), 0 0 26px rgba(53, 195, 219, 0.32);
+  }
+}
+
+/* Locked card sits visible-but-quiet under a locked node, instead of
+   staying invisible until scrolled into view. */
+.akram-tree-card--locked {
+  opacity: 0.6;
+  transform: translateY(0);
+}
+
+/* Inert card: for a node further up the tree that can't be tapped yet
+   because the one before it hasn't been unlocked. Dimmer than a
+   locked-but-tappable card, no invitation to interact. */
+.akram-tree-card--inert {
+  opacity: 0.3;
+  transform: translateY(0);
 }
 
 /* ---------- connecting card under each node ---------- */
@@ -500,6 +662,84 @@
 .akram-tree-node--employment {
   background: radial-gradient(circle at 35% 28%, #ffffff 0%, #ece5c8 55%, #cdbf8f 100%);
   box-shadow: 0 0 0 4px #d9b64a, inset 0 2px 4px rgba(255, 255, 255, 0.7);
+}
+
+/* ---------- big, hard-to-miss callout for the employment node ----------
+   Replaces the small generic "Click" hint used elsewhere - this one's a
+   bold pulsing banner plus a glowing halo on the node itself, since this
+   is the payoff node at the top of the tree and should read as unmissable
+   rather than a subtle nudge. */
+.akram-tree-node--attention {
+  animation: akram-attention-glow 1.7s ease-in-out infinite;
+}
+
+@keyframes akram-attention-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 4px #d9b64a, 0 0 0 0 rgba(255, 175, 40, 0), inset 0 2px 4px rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px #d9b64a, 0 0 26px 12px rgba(255, 175, 40, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.7);
+  }
+}
+
+.akram-employment-callout {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  font-family: "WiiBold", "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: uppercase;
+  color: #3a2400;
+  white-space: nowrap;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #ffe9a8 0%, #ffc23c 55%, #f2a417 100%);
+  box-shadow:
+    0 0 0 3px #ffffff,
+    0 0 0 4px rgba(226, 136, 20, 0.55),
+    0 8px 18px rgba(0, 0, 0, 0.3),
+    0 0 26px 6px rgba(255, 190, 60, 0.55);
+  animation: akram-callout-pulse 1.7s ease-in-out infinite;
+}
+
+.akram-employment-callout::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 9px solid #ffe9a8;
+  filter: drop-shadow(0 -2px 1px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes akram-callout-pulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow:
+      0 0 0 3px #ffffff,
+      0 0 0 4px rgba(226, 136, 20, 0.55),
+      0 8px 18px rgba(0, 0, 0, 0.3),
+      0 0 26px 6px rgba(255, 190, 60, 0.55);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.07);
+    box-shadow:
+      0 0 0 3px #ffffff,
+      0 0 0 4px rgba(226, 136, 20, 0.7),
+      0 10px 22px rgba(0, 0, 0, 0.32),
+      0 0 40px 14px rgba(255, 190, 60, 0.8);
+  }
 }
 
 .akram-lock-icon {
@@ -762,6 +1002,9 @@
   .akram-tree-card {
     opacity: 1 !important;
     transform: none !important;
+  }
+  .akram-tree-node--locked {
+    animation: none !important;
   }
   .akram-spark-layer {
     display: none !important;

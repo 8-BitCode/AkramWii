@@ -5,6 +5,7 @@
 */
 import React from "react";
 import "./Graphicspage.css";
+import sound from "./SoundManager";
 
 const GRAPHICS_DATA = [
   { id: 1, title: "Unics Game Jam", ext: "jpg" },
@@ -52,6 +53,26 @@ export default function GraphicsPage({ onGoBack, onEscape }) {
   );
 
   const index = ((absoluteIndex % total) + total) % total;
+
+  // Background music for this channel - swaps in on mount, hands back to
+  // whatever was playing before (the Wii menu loop) on the way out.
+  React.useEffect(() => {
+    sound.playMusic('graphics');
+    return () => sound.playMusic('wiiMenu');
+  }, []);
+
+// Fires for every navigation method - arrows, keyboard, swipe, and the
+  // 3D wheel (drag, momentum-snap, or a direct thumbnail click) - since
+  // they all ultimately update absoluteIndex. Skips the initial mount.
+  const isFirstRenderRef = React.useRef(true);
+  React.useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    // Add the volume option here to make it quieter (e.g., 0.3 for 30% volume)
+    sound.play('paperTurn', { volume: 0.3 }); 
+  }, [absoluteIndex]);
 
   React.useEffect(() => {
     const mq = window.matchMedia('(max-width: 600px)');

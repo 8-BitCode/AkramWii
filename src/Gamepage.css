@@ -1,20 +1,26 @@
 /* Gamepage.css — Portfolio channel page, SNES pixel-HUD themed */
+/* Colour palette: #28B860 (gold), #507870 (stone/panel), #303030 (void/shadow), #10F868 (neon accent) */
+/* Derived tints/shades added where necessary for readability and 3D effect */
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 .game-page {
-  /* ---- design tokens ---- */
-  --void: #140a08;
-  --bg-deep: #1c0f0a;
-  --panel: #2a1610;
-  --stone: #6b3a2f;
-  --stone-light: #a8583f;
-  --stone-dark: #3d1f16;
-  --gold: #ffd23f;
-  --gold-dim: #a9812a;
-  --cream: #ffefad;
-  --teal: #6bd6bd;
-  --danger: #ff6b6b;
+  /* ---- design tokens (re-mapped to new palette) ---- */
+  --void: #1b2120;               /* darkest shadow – near-black from #303030 */
+  --bg-deep: #262c2a;            /* deepest console body – darkened #303030 */
+  --panel: #3a5650;              /* plaque background – darkened #507870 for contrast */
+  --stone: #507870;              /* mid-tone, used for raised edges */
+  --stone-light: #10F868;        /* bright neon edge */
+  --stone-dark: #303030;         /* dark shadow edge */
+  --gold: #28B860;               /* yellow-green, used for titles & active elements */
+  --gold-dim: #507870;           /* dimmed gold, used for subtle borders */
+  --cream: #e4f2e9;              /* light mint for body text – high contrast on panels */
+  --teal: #10F868;               /* bright accent for links & found states */
+  --danger: #10F868;             /* kept as bright accent (used sparingly) */
+
+  /* custom hover highlight (derived) */
+  --stone-hover: #4a6658;        /* lighter teal-green for interactive hover */
+
   --font-display: 'Press Start 2P', 'Earthbound', monospace;
   --font-body: 'Courier New', 'Earthbound', monospace;
 
@@ -53,14 +59,12 @@
 .game-page-vignette {
   position: absolute;
   inset: 0;
-  background-color: #180b08;
+  background-color: #1e2623;   /* very dark teal-green */
   image-rendering: pixelated;
   background-image:
-    /* SNES-style offset red brick tile: small bricks, randomized shades so no repeating line down the screen, baked at native 1:1 pixel size (no scaling = no seam) */
-    url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAABsCAIAAAAt/3pMAAAC4UlEQVR4nO3dsWoUURgF4F1NEfAFfAa1ESUggpJm0VqxtUlnYWNpaWlrl9JKfACxCQZsAiKI+gAWo49hNzupvGfCve5cvq+aYtnfyezhL4bjXZ8+urOq48mHr+P1uwc3G0x5ffdGpSkvPn8fr8+ODitNOTg+Ga9f3rpWacqrLz+7nNLm6V+qNAO6tDcMQ4MxppjSxxQbBgICAwGBgYDAQEBgICAwEBAYCAgMBAQGAlXf9F8er5Y/Zb/JlK1h+FPrq9fTe+lpSounb8NAYH31yv6/PwWsVisbBiICAwGBgcD67eZ2yeempbOPj+9V+tds3p+O121Kmm3u5c3965WmPPv0Y7xu8xfracqMKqgNA4E572F6KtCZYkrEhoGAwEBAYCAgMBAQGAgIDAQEBgICAwGBgUD5m/72lcOllzS3huF3te9u81x6Ks9Op8RVUBsGAhqXELBhICAwEBAYCKy/Pd1U+upp5VBJs8T0Xno6F7KnKTYMBJxxaYopARsGAgIDAYGBgMBAQGAgIDAQEBgICAwEBAYC3vQXal/S7OdcyJ6m2DAQ0LiEgA0DAYGBgMBAYK+w2Tet6bU5sbFNsfHs6LDSlIPjk/F6Z09sLNS+pNnmNzbj6dswEHDGpSmmBGwYCAgMBAQGAgIDAYGBgMBAQGAgIDAQEBgI7JU2+87V9JZ+YuPW8qdc6MTGUv+hpLmjvzEbBgIalxCwYSAgMBAQGAiUNi5nmNb02kzpqT7ZZkqbYmObe2nz9G0YCPifL00xJWDDQEBgICAwEBAYCAgMBAQGAgIDAYGBgMBAoLhxOcO5mt7Sy4Bbyz9JczplR4uNxVqfPWrDQEDjEgI2DAQEBgICA4H1r+cPSz7XvnLY01mKbc7rVNIsMb2XGc/FhoGAMy5NMSVgw0BAYCAgMBAQGAgIDAQEBgICAwGBgYDAQGDX3vS3KdAt4CzFGZQ0y1zoN2bDQEDjEgI2DAQEBgICA4G/dLGqIgmOEqIAAAAASUVORK5CYII="),
-    /* overhead-light falloff toward the edges, sells the depth of the whole panel */
-    radial-gradient(ellipse 85% 75% at 50% 38%, transparent 40%, rgba(10, 5, 4, 0.6) 100%);
-  background-size: 272px 108px, 100% 100%;
+    url('./Assets/Treetile.png'),
+    radial-gradient(ellipse 85% 75% at 50% 38%, transparent 40%, rgba(10, 20, 18, 0.65) 100%);
+  background-size: 192px 96px, 100% 100%;
   background-repeat: repeat, no-repeat;
 }
 
@@ -140,6 +144,7 @@
 .game-page-esc-label {
   font-family: var(--font-body);
   font-weight: 700;
+  color: var(--cream);
 }
 
 .game-page-esc-mobile-label {
@@ -196,8 +201,7 @@
   min-width: 0;
 }
 
-/* ---------- Tablet / narrow-desktop: sidebars move below the stage and
-   flow into a responsive row instead of squeezing beside it ---------- */
+/* ---------- Tablet / narrow-desktop ---------- */
 @media (max-width: 1080px) and (min-width: 601px) {
   .game-page-content {
     grid-template-columns: 1fr 1fr;
@@ -207,17 +211,14 @@
     max-width: 760px;
     gap: 20px;
   }
-
   .game-page-sidebar {
     flex-direction: row;
     flex-wrap: wrap;
   }
-
   .game-page-sidebar .game-page-tile {
     flex: 1 1 220px;
     min-width: 0;
   }
-
   .game-page-body {
     padding-top: clamp(64px, 12vh, 96px);
   }
@@ -234,7 +235,7 @@
   }
 }
 
-/* ---------- HUD plaques: recesses carved into the console body, not cards floating on it ---------- */
+/* ---------- HUD plaques ---------- */
 .game-page-tile {
   position: relative;
   box-sizing: border-box;
@@ -256,7 +257,7 @@
   gap: 8px;
   margin-bottom: 11px;
   padding-bottom: 8px;
-  border-bottom: 2px dashed rgba(168, 88, 63, 0.3);
+  border-bottom: 2px dashed rgba(16, 248, 104, 0.2); /* neon accent */
 }
 
 .game-page-tile-icon {
@@ -336,7 +337,7 @@
   background: var(--stone-dark);
   border: 2px solid var(--void);
   box-shadow:
-    inset 0 0 0 1px rgba(168, 88, 63, 0.35),
+    inset 0 0 0 1px rgba(16, 248, 104, 0.35),
     inset 2px 2px 0 rgba(0, 0, 0, 0.3),
     3px 3px 0 var(--void);
   transition: transform 0.06s linear, box-shadow 0.06s linear;
@@ -345,10 +346,10 @@
 .game-page-link-row:hover {
   transform: translate(-2px, -2px);
   box-shadow:
-    inset 0 0 0 1px rgba(168, 88, 63, 0.5),
+    inset 0 0 0 1px rgba(16, 248, 104, 0.5),
     inset 2px 2px 0 rgba(0, 0, 0, 0.3),
     5px 5px 0 var(--void);
-  background: #4a2418;
+  background: var(--stone-hover);
 }
 
 .game-page-link-icon {
@@ -408,7 +409,7 @@
   margin: 6px 0 0 !important;
   font-family: var(--font-body);
   font-weight: 700;
-  color: #a88970;
+  color: #a0b8aa;  /* muted teal for subtle label */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-size: 10px;
@@ -429,7 +430,7 @@
   font-family: var(--font-body);
   font-weight: 700;
   font-size: clamp(10px, 0.9vw, 11px);
-  color: #8b6f60;
+  color: #7a8c82;  /* muted green-gray for unfound */
   transition: color 0.3s ease;
 }
 
@@ -446,7 +447,7 @@
   flex-shrink: 0;
   font-size: 9px;
   color: var(--void);
-  background: #3d2a20;
+  background: #2a3a30;  /* dark teal for unchecked */
   box-shadow:
     inset 1px 1px 0 rgba(255, 255, 255, 0.15),
     inset -1px -1px 0 rgba(0, 0, 0, 0.3),
@@ -461,7 +462,7 @@
 .game-page-stage-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(10, 8, 20, 0.72);
+  background-color: rgba(10, 20, 18, 0.72);
   z-index: 10;
   display: flex;
   align-items: center;
@@ -529,7 +530,7 @@
   font-size: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: rgba(255, 239, 173, 0.4);
+  color: rgba(228, 242, 233, 0.4);  /* muted cream */
   text-align: center;
 }
 
@@ -538,12 +539,10 @@
     padding: 7px 12px;
     gap: 6px;
   }
-
   .game-page-esc-floating {
     top: 12px;
     right: 12px;
   }
-
   .game-page-body {
     padding-top: 48px;
   }

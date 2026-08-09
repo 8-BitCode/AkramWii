@@ -1,7 +1,8 @@
 import React, { forwardRef, useEffect, useRef } from "react";
 
-const GodotGame = forwardRef(({ isActive, innerRef, isMobile }, ref) => {
+const GodotGame = forwardRef(({ isActive, innerRef, isMobile, onReady }, ref) => {
   const iframeRef = useRef(null);
+  const readyFiredRef = useRef(false);
 
   useEffect(() => {
     if (ref) {
@@ -20,6 +21,12 @@ const GodotGame = forwardRef(({ isActive, innerRef, isMobile }, ref) => {
     }
   }, [isActive]);
 
+  const handleLoad = () => {
+    if (readyFiredRef.current) return;
+    readyFiredRef.current = true;
+    onReady?.();
+  };
+
   const size = isMobile ? '88vw' : '35vw';
 
   return (
@@ -27,6 +34,7 @@ const GodotGame = forwardRef(({ isActive, innerRef, isMobile }, ref) => {
       ref={iframeRef}
       src="/portfolio.html"
       title="Godot Game"
+      onLoad={handleLoad}
       style={{
         width: size,
         height: size,

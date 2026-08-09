@@ -3,6 +3,7 @@ import React from "react";
 import WarningScreen from "./Warningscreen";
 import App from "./App";
 import "./Root.css";
+import sound from "./SoundManager";
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -144,6 +145,21 @@ export default function Root() {
       if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
     };
   }, [applyFrame, loop]);
+
+  // Console "power on" chime, then a loading loop for the rest of the
+  // scroll-driven boot sequence - stopped the moment the Wii menu reveals.
+  React.useEffect(() => {
+    sound.play('bootup');
+    sound.playLoop('loading');
+    return () => sound.stopLoop('loading');
+  }, []);
+
+  React.useEffect(() => {
+    if (done) {
+      sound.stopLoop('loading');
+      sound.playMusic('wiiMenu');
+    }
+  }, [done]);
 
   React.useEffect(() => {
     if (done) return undefined;

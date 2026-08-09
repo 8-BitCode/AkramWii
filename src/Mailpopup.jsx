@@ -1,6 +1,7 @@
 /* MailPopup.jsx */
 import React from "react";
 import "./Mailpopup.css";
+import sound from "./SoundManager";
 
 const DURATION = 560;
 const EASE = "cubic-bezier(0.22, 1.12, 0.3, 1)";
@@ -140,11 +141,13 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
   }, [closing, originRect, onClosed]);
 
   const handleReply = () => {
+    sound.play('select');
     window.location.href = "mailto:akrammunirawel@gmail.com";
   };
 
   const handleTrashClick = () => {
     if (closing || shaking) return;
+    sound.play('select');
     setShaking(true);
     window.setTimeout(() => setShaking(false), 420);
   };
@@ -197,12 +200,16 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
           <button
             className="mail-popup-btn mail-popup-btn--back"
             type="button"
-            onClick={() => !closing && onRequestClose?.()}
+            onClick={() => {
+              if (closing) return;
+              sound.play('back');
+              onRequestClose?.();
+            }}
             disabled={closing}
           >
             Back
           </button>
-          <span className="mail-popup-wii">Wii</span>
+          <span className="mail-popup-wii">HII, person reading this</span>
           <button
             className="mail-popup-btn mail-popup-btn--reply"
             type="button"

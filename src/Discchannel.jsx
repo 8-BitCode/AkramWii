@@ -13,6 +13,7 @@ import GraphicsPage from "./Graphicspage";
 import AboutMePage from "./Aboutmepage";
 import GamePage from "./Gamepage";
 import miiImg from "./Assets/Mii1.png";
+import sound from "./SoundManager";
 
 const DURATION = 620;
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
@@ -306,19 +307,26 @@ function MiiPopulateTransition({ active, onCovered, onDone }) {
    ============================================================ */
 const PIXEL_COLS = 50;
 const PIXEL_ROWS = 28;
-const WAVE_DURATION_MS = 800;      // total wave travel time
-const CELL_ANIM_MS = 200;          // duration of each pixel's pop
-const HOLD_MS = 250;
+const WAVE_DURATION_MS = 800;
+const CELL_ANIM_MS = 200;
+const HOLD_MS = 250;          // minimum hold once fully covered
+const MAX_HOLD_MS = 4500;     // safety cap so we never wait forever on `ready`
 
 const PIXEL_PALETTE = [
   "#10f868", "#ff0056", "#8861fc", "#a61751",
   "#f7f79a", "#4b8c88", "#36262f",
 ];
 
-function PixelWipeTransition({ active, onCovered, onDone }) {
+// `ready` (default true) lets a caller hold the fully-covered "hold" stage
+// open past the minimum HOLD_MS until whatever is being revealed underneath
+// (e.g. a slow-loading game iframe) is actually ready - so the wipe's own
+// "out" dissolve is what reveals it, instead of the content popping in on
+// its own schedule sometime after the wipe has already finished.
+function PixelWipeTransition({ active, ready = true, onCovered, onDone }) {
   const [stage, setStage] = React.useState("idle");
-  const timeoutsRef = React.useRef([]);
   const firedRef = React.useRef(false);
+  const holdStartRef = React.useRef(0);
+  const holdAdvancedRef = React.useRef(false);
 
   const cells = React.useMemo(() => {
     const list = [];
@@ -330,14 +338,11 @@ function PixelWipeTransition({ active, onCovered, onDone }) {
       for (let col = 0; col < PIXEL_COLS; col++) {
         const dx = col - centerX;
         const dy = row - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy) / maxDist; // 0..1
+        const distance = Math.sqrt(dx * dx + dy * dy) / maxDist;
 
-        // Tiny organic jitter
         const jitter = (Math.random() - 0.5) * 0.04;
         const distClamped = Math.min(1, Math.max(0, distance + jitter));
 
-        // In: centre → edges  (delay = distance)
-        // Out: edges → centre (delay = 1 - distance)
         const delayIn = distClamped * WAVE_DURATION_MS;
         const delayOut = (1 - distClamped) * WAVE_DURATION_MS;
 
@@ -354,6 +359,7 @@ function PixelWipeTransition({ active, onCovered, onDone }) {
     return list;
   }, []);
 
+  // Kick off the wipe when `active` flips true.
   React.useEffect(() => {
     if (!active || firedRef.current) return undefined;
     firedRef.current = true;
@@ -370,27 +376,61 @@ function PixelWipeTransition({ active, onCovered, onDone }) {
     }
 
     setStage("in");
-    const totalIn = WAVE_DURATION_MS + CELL_ANIM_MS;
-    const totalOut = WAVE_DURATION_MS + CELL_ANIM_MS;
-
-    timeoutsRef.current.push(
-      setTimeout(() => {
-        setStage("hold");
-        onCovered?.();
-      }, totalIn),
-      setTimeout(() => setStage("out"), totalIn + HOLD_MS),
-      setTimeout(() => {
-        setStage("idle");
-        firedRef.current = false;
-        onDone?.();
-      }, totalIn + HOLD_MS + totalOut)
-    );
-
-    return () => {
-      timeoutsRef.current.forEach(clearTimeout);
-      timeoutsRef.current = [];
-    };
+    return undefined;
   }, [active]);
+
+  // in -> hold: fixed duration, screen becomes fully covered.
+  React.useEffect(() => {
+    if (stage !== "in") return undefined;
+    const t = setTimeout(() => {
+      setStage("hold");
+      onCovered?.();
+    }, WAVE_DURATION_MS + CELL_ANIM_MS);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  // hold -> out: waits for `ready` (bounded by HOLD_MS..MAX_HOLD_MS) so the
+  // dissolve-out only starts once whatever's underneath actually has
+  // something to show - anchored to when hold began so `ready` flipping
+  // mid-wait doesn't restart the clock.
+  React.useEffect(() => {
+    if (stage !== "hold") return undefined;
+    holdStartRef.current = Date.now();
+    holdAdvancedRef.current = false;
+
+    const maxTimer = setTimeout(() => {
+      if (!holdAdvancedRef.current) {
+        holdAdvancedRef.current = true;
+        setStage("out");
+      }
+    }, MAX_HOLD_MS);
+
+    return () => clearTimeout(maxTimer);
+  }, [stage]);
+
+  React.useEffect(() => {
+    if (stage !== "hold" || holdAdvancedRef.current || !ready) return undefined;
+    const elapsed = Date.now() - holdStartRef.current;
+    const remaining = Math.max(0, HOLD_MS - elapsed);
+    const t = setTimeout(() => {
+      if (!holdAdvancedRef.current) {
+        holdAdvancedRef.current = true;
+        setStage("out");
+      }
+    }, remaining);
+    return () => clearTimeout(t);
+  }, [stage, ready]);
+
+  // out -> idle: fixed duration, mirrors the "in" dissolve.
+  React.useEffect(() => {
+    if (stage !== "out") return undefined;
+    const t = setTimeout(() => {
+      setStage("idle");
+      firedRef.current = false;
+      onDone?.();
+    }, WAVE_DURATION_MS + CELL_ANIM_MS);
+    return () => clearTimeout(t);
+  }, [stage]);
 
   if (stage === "idle") return null;
 
@@ -468,7 +508,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const animationFrameRef = React.useRef(null);
   const isClosingRef = React.useRef(false);
   const isMountedRef = React.useRef(true);
-  const gamePageRef = React.useRef(null); // ref for the GamePage container to enable pointer events
+  const gamePageRef = React.useRef(null);
 
   const [showStartVideo, setShowStartVideo] = React.useState(false);
   const [hasPlayedStart, setHasPlayedStart] = React.useState(false);
@@ -486,10 +526,18 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const [gamePageVisible, setGamePageVisible] = React.useState(false);
   const [showGameWipe, setShowGameWipe] = React.useState(false);
   const gameTransitionStartedRef = React.useRef(false);
-  const [previewHidden, setPreviewHidden] = React.useState(false); // hides preview after wipe covers
-  const [gamePageRevealed, setGamePageRevealed] = React.useState(false); // shows GamePage after wipe covers
+  const [previewHidden, setPreviewHidden] = React.useState(false);
+  const [gamePageRevealed, setGamePageRevealed] = React.useState(false);
   const [showHomeMenu, setShowHomeMenu] = React.useState(false);
   const videoRef = React.useRef(null);
+
+  // ---- NEW STATE: controls when GamePage component mounts ----
+  const [gamePageLoaded, setGamePageLoaded] = React.useState(false);
+  // Set once the Godot iframe reports it has actually loaded - lets the
+  // pixel wipe hold its "fully covered" stage until there's really
+  // something ready to reveal, instead of revealing on a fixed timer.
+  const [gameIframeReady, setGameIframeReady] = React.useState(false);
+  const handleGameIframeReady = React.useCallback(() => setGameIframeReady(true), []);
 
   const isMobilePortrait = isMobilePortraitProp ?? React.useMemo(
     () => window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches,
@@ -502,10 +550,11 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   const isAkram = isMobilePortrait ? tileIndex === 3 : tileIndex === 10;
   const isSpecialTile = isPortfolio || isAboutMe || isGraphics || isAkram;
 
-  // The Wii custom cursor (owned by App.jsx) should only hide once GamePage
-  // is actually revealed and interactive - i.e. after the wipe transition
-  // finishes, not while browsing the preview/start-video for this channel.
-  // gamePageVisible is exactly that moment (see handleGameWipeCovered below).
+  React.useEffect(() => {
+    if (!isSpecialTile) sound.play('noDisc');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   React.useEffect(() => {
     window.dispatchEvent(
       new CustomEvent('gamePageActive', { detail: { active: !!(isPortfolio && gamePageVisible) } })
@@ -588,6 +637,21 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     if (closing || (!akramPageVisible && !graphicsPageVisible && !aboutMePageVisible && !gamePageVisible)) setShowHomeMenu(false);
   }, [closing, akramPageVisible, graphicsPageVisible, aboutMePageVisible, gamePageVisible]);
 
+  // ---- Sound loops unchanged ----
+  const anyWipeActive = showWipe || showGraphicsWipe || showAboutMeWipe || showGameWipe;
+  React.useEffect(() => {
+    if (anyWipeActive) sound.playLoop('loading');
+    else sound.stopLoop('loading');
+    return () => sound.stopLoop('loading');
+  }, [anyWipeActive]);
+
+  const prevShowHomeMenuRef = React.useRef(false);
+  React.useEffect(() => {
+    if (showHomeMenu && !prevShowHomeMenuRef.current) sound.play('homeMenuOpen');
+    else if (!showHomeMenu && prevShowHomeMenuRef.current) sound.play('homeMenuClose');
+    prevShowHomeMenuRef.current = showHomeMenu;
+  }, [showHomeMenu]);
+
   const handleAkramEscape = React.useCallback(() => {
     if (!closing && akramPageVisible) {
       setShowHomeMenu((prev) => !prev);
@@ -612,6 +676,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [closing, gamePageVisible]);
 
+  // ---- Closing reset: also reset gamePageLoaded ----
   React.useEffect(() => {
     if (closing) {
       setShowStartVideo(false);
@@ -628,6 +693,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       gameTransitionStartedRef.current = false;
       setPreviewHidden(false);
       setGamePageRevealed(false);
+      setGamePageLoaded(false);           // ★
+      setGameIframeReady(false);
       if (gamePageRef.current) {
         gamePageRef.current.style.pointerEvents = 'none';
       }
@@ -638,6 +705,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     }
   }, [closing]);
 
+  // ---- Tile switch reset: also reset gamePageLoaded ----
   React.useEffect(() => {
     if (isSpecialTile) {
       setShowStartVideo(false);
@@ -665,6 +733,8 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
         gameTransitionStartedRef.current = false;
         setPreviewHidden(false);
         setGamePageRevealed(false);
+        setGamePageLoaded(false);         // ★
+        setGameIframeReady(false);
         if (gamePageRef.current) {
           gamePageRef.current.style.pointerEvents = 'none';
         }
@@ -708,6 +778,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       gameTransitionStartedRef.current = false;
       setPreviewHidden(false);
       setGamePageRevealed(false);
+      setGamePageLoaded(false);          // ★
       if (gamePageRef.current) {
         gamePageRef.current.style.pointerEvents = 'none';
       }
@@ -724,8 +795,9 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     const handleEnded = () => {
       if (gameTransitionStartedRef.current) return;
       gameTransitionStartedRef.current = true;
-      // Start the wipe immediately
+      // ★ Start the wipe and allow GamePage to mount
       setShowGameWipe(true);
+      setGamePageLoaded(true);
     };
 
     video.addEventListener('ended', handleEnded);
@@ -733,7 +805,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   }, [isPortfolio, showStartVideo, videoLoaded]);
 
   const handleGameWipeCovered = React.useCallback(() => {
-    // When the wipe is fully covering, hide preview and reveal GamePage
+    sound.stopLoop('loading');
     setPreviewHidden(true);
     setGamePageRevealed(true);
     setGamePageVisible(true);
@@ -741,7 +813,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
 
   const handleGameWipeDone = React.useCallback(() => {
     setShowGameWipe(false);
-    // Enable pointer events on the GamePage container
     if (gamePageRef.current) {
       gamePageRef.current.style.pointerEvents = 'auto';
     }
@@ -768,6 +839,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   }, [isGraphics, showStartVideo, videoLoaded]);
 
   const handleGraphicsWipeCovered = React.useCallback(() => {
+    sound.stopLoop('loading');
     if (isMountedRef.current) setGraphicsPageVisible(true);
   }, []);
 
@@ -796,6 +868,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   }, [isAboutMe, showStartVideo, videoLoaded]);
 
   const handleAboutMeWipeCovered = React.useCallback(() => {
+    sound.stopLoop('loading');
     if (isMountedRef.current) setAboutMePageVisible(true);
   }, []);
 
@@ -823,6 +896,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
   }, [akramAnimationPlayed]);
 
   const handleWipeCovered = React.useCallback(() => {
+    sound.stopLoop('loading');
     if (isMountedRef.current) setAkramPageVisible(true);
   }, []);
 
@@ -1014,11 +1088,13 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     if (closing || !isSpecialTile) return;
     if (isAkram) {
       if (!akramAnimationPlayed) {
+        sound.play('start');
         setAkramPlayTrigger((t) => t + 1);
       }
       return;
     }
     if (hasPlayedStart) return;
+    sound.play('start');
     setShowStartVideo(true);
     setHasPlayedStart(true);
   };
@@ -1062,7 +1138,6 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
     if (isPortfolio) {
       return (
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-          {/* Preview container – hidden after wipe covers */}
           <div
             style={{
               position: 'absolute',
@@ -1074,7 +1149,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
               background: '#000',
               opacity: previewHidden ? 0 : 1,
               pointerEvents: 'none',
-              transition: 'opacity 350ms ease',
+              transition: showGameWipe ? 'none' : 'opacity 350ms ease',
             }}
           >
             <img
@@ -1119,24 +1194,26 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
             />
           </div>
 
-          {/* GamePage – initially hidden, revealed only when wipe covers */}
+          {/* GamePage – only mounts after gamePageLoaded is true */}
           <div
             ref={gamePageRef}
             style={{
               position: 'absolute',
               inset: 0,
               opacity: gamePageRevealed ? 1 : 0,
-              pointerEvents: 'none', // overridden via ref after wipe done
-              transition: 'opacity 350ms ease',
+              pointerEvents: 'none',
+              transition: showGameWipe ? 'none' : 'opacity 350ms ease',
               zIndex: 1,
             }}
           >
-            <GamePage onGoBack={onRequestClose} onEscape={handleGameEscape} />
+            {gamePageLoaded && (
+              <GamePage onGoBack={onRequestClose} onEscape={handleGameEscape} onGameReady={handleGameIframeReady} />
+            )}
           </div>
 
-          {/* Pixel wipe – overlays everything */}
           <PixelWipeTransition
             active={showGameWipe}
+            ready={gameIframeReady}
             onCovered={handleGameWipeCovered}
             onDone={handleGameWipeDone}
           />
@@ -1362,7 +1439,11 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
       <div 
         className="disc-channel-backdrop" 
         ref={backdropRef}
-        onClick={() => !closing && onRequestClose?.()}
+        onClick={() => {
+          if (closing) return;
+          sound.play('back');
+          onRequestClose?.();
+        }}
       />
       <div 
         className="disc-channel-frame" 
@@ -1396,7 +1477,7 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
                   fill="url(#discHeaderGrad)"
                 />
               </svg>
-              <span className="disc-channel-title">Disc Channel</span>
+              <span className="disc-channel-title"></span>
             </div>
 
             <button 
@@ -1435,7 +1516,11 @@ export default function DiscChannel({ originRect, closing, tileIndex, isMobilePo
           <button
             className="disc-channel-btn disc-channel-btn--menu"
             type="button"
-            onClick={() => !closing && onRequestClose?.()}
+            onClick={() => {
+              if (closing) return;
+              sound.play('back');
+              onRequestClose?.();
+            }}
             disabled={closing}
           >
             {isSpecialTile ? "Back" : "Wii Menu"}

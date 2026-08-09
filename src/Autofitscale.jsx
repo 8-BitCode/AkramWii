@@ -78,6 +78,7 @@ const AutoFitScale = ({ children, maxScale = 1, boost = 1 }) => {
         style={{
           width: naturalSize.width ? naturalSize.width * scale : undefined,
           height: naturalSize.height ? naturalSize.height * scale : undefined,
+          transition: "width 250ms ease, height 250ms ease",
         }}
       >
         <div
@@ -86,6 +87,7 @@ const AutoFitScale = ({ children, maxScale = 1, boost = 1 }) => {
             display: "inline-block",
             transform: `scale(${scale})`,
             transformOrigin: "top left",
+            transition: "transform 250ms ease",
           }}
         >
           {children}

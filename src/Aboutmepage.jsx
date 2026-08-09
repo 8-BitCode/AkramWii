@@ -4,6 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import "./Aboutmepage.css";
+import sound from "./SoundManager";
 
 // Face assets
 import mii1Face from "./Assets/Mii1face.png";
@@ -284,6 +285,7 @@ const GlobeMesh = ({ nodes, activeFactIndex, setActiveFactIndex, isMobile }) => 
               <div
                 onClick={(e) => {
                   e.stopPropagation();
+                  sound.play('select');
                   setActiveFactIndex(idx);
                 }}
                 title={fact.title}
@@ -373,6 +375,25 @@ export default function AboutMePage({ onGoBack, onEscape }) {
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
 
+  // Background music for this page - swaps in on mount, and hands back to
+  // whatever was playing before (the Wii menu loop) on the way out.
+  useEffect(() => {
+    sound.playMusic('aboutMe');
+    return () => sound.playMusic('wiiMenu');
+  }, []);
+
+  // Page-turn SFX every time the active section changes - desktop hover or
+  // mobile tap both funnel through setActivePanel, so watching the state
+  // itself catches both. Skips the initial mount.
+  const isFirstPanelRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstPanelRenderRef.current) {
+      isFirstPanelRenderRef.current = false;
+      return;
+    }
+    sound.play('paperTurn');
+  }, [activePanel]);
+
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 800px)');
     const handleChange = (e) => setIsMobile(e.matches);
@@ -380,11 +401,15 @@ export default function AboutMePage({ onGoBack, onEscape }) {
     return () => mq.removeEventListener('change', handleChange);
   }, []);
 
-  const handleFaceClick = () => setFaceStep((s) => s + 1);
+  const handleFaceClick = () => {
+    sound.play('select');
+    setFaceStep((s) => s + 1);
+  };
   const currentFace = FACE_SEQUENCE[faceStep % FACE_SEQUENCE.length];
   const activeAlbum = ALBUMS[selectedAlbumIndex];
 
   const handleAlbumSelect = (idx) => {
+    sound.play('select');
     setSelectedAlbumIndex(idx);
     if (deckRef.current) {
       const deck = deckRef.current;

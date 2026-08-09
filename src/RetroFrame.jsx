@@ -1,12 +1,19 @@
 import React from 'react';
 
-const VOID = '#140a08';
-const STONE = '#6b3a2f';
-const STONE_LIGHT = '#a8583f';
-const STONE_DARK = '#3d1f16';
-const PANEL = '#2a1610';
-const GOLD = '#ffd23f';
-const CREAM = '#ffefad';
+// ── Palette ──
+// #28B860  → gold accent (now used as the bevel highlight & pulsing light)
+// #507870  → dark teal shell
+// #303030  → void / deep shadow
+// #10F868  → neon green (used only for the glowing halo on the pulse LED)
+// ── Derived for readability ──
+const LIGHT_MINT = '#e4f2e9';         // body text
+
+const VOID        = '#303030';
+const STONE       = '#507870';
+const STONE_LIGHT = '#28B860';        // gold highlight (replaces neon for 3D edges)
+const STONE_DARK  = '#303030';        // same as VOID
+const GOLD        = '#28B860';
+const NEON_GREEN  = '#10F868';
 
 const Bolt = ({ style }) => (
   <span
@@ -38,7 +45,7 @@ const RetroFrame = ({ children, thin }) => {
           boxShadow: `
             inset 16px 16px 0 ${VOID},
             inset 24px 24px 55px 6px rgba(0,0,0,0.9),
-            inset -8px -8px 0 ${STONE_LIGHT},
+            inset -8px -8px 0 ${STONE_LIGHT},   /* now gold highlight */
             inset 0 0 0 8px ${STONE_DARK},
             inset 0 0 0 11px ${VOID},
             0 10px 24px rgba(0,0,0,0.55)
@@ -57,7 +64,7 @@ const RetroFrame = ({ children, thin }) => {
             background: VOID,
             borderStyle: 'solid',
             borderWidth: '3px',
-            borderColor: `${VOID} ${STONE_LIGHT} ${STONE_LIGHT} ${VOID}`,
+            borderColor: `${VOID} ${STONE_LIGHT} ${STONE_LIGHT} ${VOID}`, /* gold right & bottom */
             boxShadow: `inset 0 0 0 5px ${STONE_DARK}, inset 0 0 30px rgba(0,0,0,0.8)`,
           }}
         >
@@ -101,7 +108,7 @@ const RetroFrame = ({ children, thin }) => {
               fontFamily: "'Press Start 2P', 'Earthbound', monospace",
               fontSize: thin ? 6 : 7,
               letterSpacing: '0.5px',
-              color: 'rgba(255,239,173,0.6)',
+              color: `rgba(228,242,233,0.6)`,   /* light mint, very readable */
             }}
           >
             {thin ? 'P1' : 'PLAYER 1'}
@@ -113,7 +120,7 @@ const RetroFrame = ({ children, thin }) => {
                 width: 7,
                 height: 7,
                 background: GOLD,
-                boxShadow: `0 0 0 2px ${VOID}, 0 0 6px 2px rgba(255,210,63,0.85)`,
+                boxShadow: `0 0 0 2px ${VOID}, 0 0 8px 3px rgba(16,248,104,0.85)`, /* neon green glow */
                 animation: 'retroFramePulse 1.4s steps(2) infinite',
               }}
             />
@@ -122,7 +129,7 @@ const RetroFrame = ({ children, thin }) => {
                 style={{
                   fontFamily: "'Press Start 2P', 'Earthbound', monospace",
                   fontSize: 6,
-                  color: 'rgba(255,239,173,0.6)',
+                  color: `rgba(228,242,233,0.6)`,
                 }}
               >
                 ON

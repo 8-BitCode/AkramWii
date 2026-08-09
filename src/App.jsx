@@ -9,6 +9,7 @@ import graphicsGif from "./Assets/Graphicspreviewtile.gif";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
 import experiencePreview from "./Assets/Experiencepreview.gif";
 import { AkramTileArt } from "./Akramart";
+import sound from "./SoundManager";
 
 // Resolved once at module load - no need to recompute this on every render.
 let experiencePreviewMobile = experiencePreview;
@@ -135,6 +136,25 @@ export default () => {
       isMountedRef.current = false;
     };
   }, []);
+
+  // Keep the sound engine in sync with the Settings panel - everything
+  // that calls sound.play()/playLoop() elsewhere in the app reads these
+  // two values through the singleton, not through props/context.
+  React.useEffect(() => {
+    sound.setSfxEnabled(settings.sfxOn);
+  }, [settings.sfxOn]);
+
+  React.useEffect(() => {
+    sound.setSfxVolume(settings.sfxVolume);
+  }, [settings.sfxVolume]);
+
+  React.useEffect(() => {
+    sound.setMusicEnabled(settings.musicOn);
+  }, [settings.musicOn]);
+
+  React.useEffect(() => {
+    sound.setMusicVolume(settings.musicVolume);
+  }, [settings.musicVolume]);
 
   // Check for mobile portrait on resize
   React.useEffect(() => {
@@ -346,6 +366,7 @@ export default () => {
       e.preventDefault();
       return;
     }
+    sound.play('select');
     const rect = e.currentTarget.getBoundingClientRect();
     setOriginRect(rect);
     setSelectedTileIndex(index);
@@ -356,6 +377,7 @@ export default () => {
 
   const handleMailOpen = React.useCallback((e) => {
     if (mailOpen || mailClosing) return;
+    sound.play('select');
     const rect = e.currentTarget.getBoundingClientRect();
     setMailOriginRect(rect);
     setMailOpen(true);
@@ -371,6 +393,7 @@ export default () => {
 
   const handleSettingsOpen = React.useCallback((e) => {
     if (settingsOpen || settingsClosing) return;
+    sound.play('select');
     const rect = e.currentTarget.getBoundingClientRect();
     setSettingsOriginRect(rect);
     setSettingsOpen(true);
