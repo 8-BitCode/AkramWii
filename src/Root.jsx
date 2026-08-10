@@ -11,6 +11,16 @@ import { isFirefox } from "./Env";
 // take a cheaper path when this is true.
 const FIREFOX = isFirefox();
 
+// Computed once — touch/coarse-pointer devices (phones, tablets) take the
+// same cheap "no per-frame blur" path as Firefox. On iOS Safari especially,
+// rewriting `filter: blur()` every animation frame on a large element that
+// has `will-change: filter` can trigger a black flash during
+// re-rasterization. Since opacity/scale alone still reads as "dissolving",
+// it's not worth paying that cost (or risking the flash) on touch devices.
+const COARSE_POINTER =
+  typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+const SKIP_BLUR = FIREFOX || COARSE_POINTER;
+
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -107,12 +117,15 @@ export default function Root() {
       if (!invisible) {
         const scale = 1 + p * 0.22;
         const translate = -p * 46;
-        if (FIREFOX) {
-          // Animating `filter: blur()` every frame forces Firefox to fully
-          // re-rasterize the warning screen's text/SVG each tick — one of
-          // the most expensive things you can animate there. Opacity fading
-          // to 0 while it scales/moves away still reads as "dissolving",
-          // just without paying the blur repaint cost every frame.
+        if (SKIP_BLUR) {
+          // Animating `filter: blur()` every frame forces Firefox (and,
+          // separately, iOS/mobile Safari) to fully re-rasterize the
+          // warning screen's text/SVG each tick — one of the most
+          // expensive things you can animate there, and on iOS Safari
+          // specifically has been observed to cause a black flash while
+          // the layer is re-rasterized mid-gesture. Opacity fading to 0
+          // while it scales/moves away still reads as "dissolving", just
+          // without paying that cost or risking the flash.
           warningRef.current.style.filter = "";
         } else {
           const blur = p * 8;
@@ -237,10 +250,9 @@ export default function Root() {
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const SCROLL_SENSITIVITY = 0.0016;
     const TOUCH_SENSITIVITY = 0.0048;
-    // Ignore sub-pixel finger jitter on touchmove so it doesn't get
-    // translated into tiny back-and-forth deltas that make `targetRef`
-    // (and everything downstream of it) tremor near thresholds.
-    const TOUCH_DEADZONE = 1.5; // px
+    // Below this magnitude, a smoothed touch delta is treated as sensor
+    // noise rather than an intentional scroll and is ignored entirely.
+    const TOUCH_DEADZONE = 1.2; // px, measured on the smoothed delta
 
     const skipToEnd = () => {
       doneRef.current = true;
@@ -256,22 +268,37 @@ export default function Root() {
       targetRef.current = clamp(targetRef.current + e.deltaY * SCROLL_SENSITIVITY, 0, 1);
     };
 
-    let touchStartY = null;
+    let touchLastY = null;
+    // Low-pass filtered per-event delta. At slow scroll speeds, raw
+    // touchmove deltas from the touch sensor jitter by a few px in both
+    // directions frame to frame — using the raw value directly let that
+    // noise flip the *sign* of the delta, which briefly reversed
+    // targetRef and made the clip-path reveal circle visibly shrink and
+    // regrow (reads as the black backdrop "flashing in and out"). Smoothing
+    // the delta with an EMA means only a sustained motion in one direction
+    // can move it past the deadzone, so isolated noisy samples get
+    // absorbed instead of flipping the direction.
+    let smoothedDy = 0;
+
     const handleTouchStart = (e) => {
-      touchStartY = e.touches[0]?.clientY ?? null;
+      touchLastY = e.touches[0]?.clientY ?? null;
+      smoothedDy = 0;
     };
     const handleTouchMove = (e) => {
       e.preventDefault();
-      if (touchStartY === null) return;
-      const y = e.touches[0]?.clientY ?? touchStartY;
-      const dy = touchStartY - y;
-      if (Math.abs(dy) < TOUCH_DEADZONE) return;
-      touchStartY = y;
+      if (touchLastY === null) return;
+      const y = e.touches[0]?.clientY ?? touchLastY;
+      const rawDy = touchLastY - y;
+      touchLastY = y;
+
+      smoothedDy = lerp(smoothedDy, rawDy, 0.5);
+      if (Math.abs(smoothedDy) < TOUCH_DEADZONE) return;
+
       if (prefersReducedMotion) {
-        if (dy > 0) skipToEnd();
+        if (smoothedDy > 0) skipToEnd();
         return;
       }
-      targetRef.current = clamp(targetRef.current + dy * TOUCH_SENSITIVITY, 0, 1);
+      targetRef.current = clamp(targetRef.current + smoothedDy * TOUCH_SENSITIVITY, 0, 1);
     };
 
     const handleKeyDown = (e) => {
