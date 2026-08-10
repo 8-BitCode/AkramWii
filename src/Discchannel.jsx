@@ -185,22 +185,25 @@ function CameraApertureTransition({ active, onCovered, onDone }) {
 }
 
 /* ---------- Mii-scatter transition (About Me channel only) ---------- */
-// Perf note: this used to be a fixed 30x30 (900-node) grid on every device,
-// including phones - which are exactly the devices least able to afford
-// 900 individually-animated <img> elements. Desktop gets the full 16x13
-// (208-node) density; mobile gets a lighter 9x8 (72-node) grid instead,
-// sized up via CSS (see .mii-pop--compact in DiscChannel.css) to still
-// fully cover a phone screen. The per-node stagger step is derived from
-// the count so the overall in/out duration - and therefore the visual
-// timing/feel - stays about the same on both.
+// Perf note: this started as a fixed 30x30 (900-node) grid on every device,
+// then was cut to 16x13 (208-node) desktop / 9x8 (72-node) mobile - still a
+// lot of simultaneously-animated <img> elements (each with its own
+// staggered pop-in animation, a continuous "bob" loop while held, and a
+// drop-shadow filter). Cut further here to 8x6 (48-node) desktop / 5x4
+// (20-node) mobile - about a 75-80% reduction from the previous version -
+// with each Mii sized up in CSS (see .mii-pop-mii / .mii-pop--compact in
+// DiscChannel.css) so the sparser grid still reads as a full, dense swarm
+// covering the screen. The per-node stagger step is derived from the count
+// so the overall in/out duration - and therefore the visual timing/feel -
+// stays about the same regardless of node count.
 const MII_POP_TARGET_SPREAD_MS = 890; // matches the original 900-node timing
 const MII_POP_DURATION_IN = 260;
 const MII_POP_DURATION_OUT = 220;
 const MII_POP_HOLD_MS = 1000;
 
 const getMiiPopConfig = (isMobile) => {
-  const cols = isMobile ? 9 : 16;
-  const rows = isMobile ? 8 : 13;
+  const cols = isMobile ? 5 : 8;
+  const rows = isMobile ? 4 : 6;
   const count = cols * rows;
   const stepIn = MII_POP_TARGET_SPREAD_MS / (count - 1);
   const stepOut = stepIn;

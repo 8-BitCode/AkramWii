@@ -3,6 +3,9 @@ import React from "react";
 import "./Mailpopup.css";
 import "./Settingspanel.css";
 import sound from "./Soundmanager";
+import { isFirefox } from "./Env";
+
+const FIREFOX = isFirefox();
 
 const DURATION = 560;
 const EASE = "cubic-bezier(0.22, 1.12, 0.3, 1)";
@@ -144,7 +147,8 @@ export default function SettingsPanel({
 
     rafRef.current = requestAnimationFrame(() => {
       if (!isMountedRef.current) return;
-      el.style.transition = `transform ${DURATION}ms ${EASE}, border-radius ${DURATION}ms ease, opacity ${Math.round(DURATION * 0.6)}ms ease`;
+      const radiusTransition = FIREFOX ? "" : `, border-radius ${DURATION}ms ease`;
+      el.style.transition = `transform ${DURATION}ms ${EASE}${radiusTransition}, opacity ${Math.round(DURATION * 0.6)}ms ease`;
       el.style.transform = "translate(-50%, -50%) scale(1, 1)";
       el.style.borderRadius = "";
       el.style.opacity = "1";
@@ -184,7 +188,9 @@ export default function SettingsPanel({
       const translateX = originRect.left + originRect.width / 2 - (restRect.left + restRect.width / 2);
       const translateY = originRect.top + originRect.height / 2 - (restRect.top + restRect.height / 2);
 
-      el.style.transition = `transform ${closeDuration}ms ease, border-radius ${closeDuration}ms ease, opacity ${closeDuration}ms ease`;
+      el.style.transition = FIREFOX
+        ? `transform ${closeDuration}ms ease, opacity ${closeDuration}ms ease`
+        : `transform ${closeDuration}ms ease, border-radius ${closeDuration}ms ease, opacity ${closeDuration}ms ease`;
       el.style.transform = `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
       el.style.borderRadius = ORIGIN_RADIUS;
       el.style.opacity = "0";

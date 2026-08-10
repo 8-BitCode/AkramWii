@@ -391,6 +391,14 @@ body {
   animation: tile-outline-pulse 2s ease-in-out infinite;
 }
 
+/* While the Root intro is still clip-path/transform-animating the whole
+   screen, this infinite box-shadow pulse would otherwise repaint every
+   frame underneath it too — two expensive animations stacked on the same
+   frame budget. Hold it at its resting state until the reveal finishes. */
+.main-layer:not(.done) .wii-tile[data-index="0"] {
+  animation: none;
+}
+
 .wii-tile[data-index="0"]:hover {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.8),

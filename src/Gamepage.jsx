@@ -6,6 +6,7 @@ import RetroFrame from "./RetroFrame";
 import BottomBar from "./BottomBar";
 import AutoFitScale from "./Autofitscale";
 import sound from "./Soundmanager"; // <-- Import sound manager
+import { getMailtoHref } from "./Contact";
 
 const TOTAL_SECRETS = 4;
 
@@ -189,21 +190,35 @@ export default function GamePage({ onGoBack, onEscape, onGameReady }) {
                   {[
                     { icon: '🐙', label: 'GitHub', href: 'https://github.com/8-BitCode' },
                     { icon: '💼', label: 'LinkedIn', href: 'https://www.linkedin.com/in/akrammunirawel/' },
-                    { icon: '✉️', label: 'Email Me', href: 'mailto:akrammunirawel@gmail.com' },
+                    { icon: '✉️', label: 'Email Me', isEmail: true },
                     { icon: '📄', label: 'Download CV', href: '/cv.pdf', download: true },
-                  ].map(({ icon, label, href, download }) => (
-                    <a
-                      key={label}
-                      href={href}
-                      target={download ? undefined : '_blank'}
-                      rel="noopener noreferrer"
-                      download={download || undefined}
-                      className="game-page-link-row"
-                    >
-                      <span className="game-page-link-icon">{icon}</span>
-                      <span className="game-page-link-label">{label}</span>
-                    </a>
-                  ))}
+                  ].map(({ icon, label, href, download, isEmail }) =>
+                    isEmail ? (
+                      // No static mailto: href in the markup — built only on click,
+                      // so the address never sits in the page source for scrapers.
+                      <button
+                        key={label}
+                        type="button"
+                        className="game-page-link-row"
+                        onClick={() => { window.location.href = getMailtoHref(); }}
+                      >
+                        <span className="game-page-link-icon">{icon}</span>
+                        <span className="game-page-link-label">{label}</span>
+                      </button>
+                    ) : (
+                      <a
+                        key={label}
+                        href={href}
+                        target={download ? undefined : '_blank'}
+                        rel="noopener noreferrer"
+                        download={download || undefined}
+                        className="game-page-link-row"
+                      >
+                        <span className="game-page-link-icon">{icon}</span>
+                        <span className="game-page-link-label">{label}</span>
+                      </a>
+                    )
+                  )}
                 </div>
               </HudPlaque>
 

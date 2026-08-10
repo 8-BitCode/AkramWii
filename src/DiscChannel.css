@@ -854,10 +854,10 @@
 
 .mii-pop-mii {
   position: absolute;
-  /* Sized generously so a 16x13 (208-node) grid overlaps enough to fully
-     cover the screen with no visible gaps - similar density to the
-     original 900-node version, at ~4x fewer nodes. */
-  width: clamp(120px, 20vw, 260px);
+  /* Sized up so the sparser 8x6 (48-node) grid still fully covers the
+     screen with no visible gaps, at roughly the same density feel as the
+     previous, much more expensive 16x13 (208-node) version. */
+  width: clamp(200px, 34vw, 440px);
   height: auto;
   object-fit: contain;
   -webkit-user-drag: none;
@@ -873,13 +873,12 @@
   animation-delay: var(--delay-in, 0ms);
 }
 
-/* Mobile gets a 9x8 (72-node) grid instead of the 16x13 (208-node) desktop
-   one - phones are the devices least able to afford a few hundred
-   individually-animated elements. The gaps between those fewer nodes are
-   proportionally wider (~1.7-1.9x), so the Miis are sized up to match and
-   still fully cover the screen with the same node-count savings. */
+/* Mobile gets a 5x4 (20-node) grid instead of the 8x6 (48-node) desktop
+   one - phones are the devices least able to afford many individually-
+   animated elements. Sized up further to match the wider gaps between
+   those fewer nodes and still fully cover a phone screen. */
 .mii-pop--compact .mii-pop-mii {
-  width: clamp(110px, 34vw, 210px);
+  width: clamp(180px, 52vw, 320px);
 }
 
 .mii-pop--hold .mii-pop-mii {

@@ -2,15 +2,21 @@
 import React from "react";
 import "./Mailpopup.css";
 import sound from "./Soundmanager";
+import { getEmail, getMailtoHref } from "./Contact";
+import { isFirefox } from "./Env";
+
+const FIREFOX = isFirefox();
 
 const DURATION = 560;
 const EASE = "cubic-bezier(0.22, 1.12, 0.3, 1)";
 const ORIGIN_RADIUS = "50%";
 
+// Built at render time via getEmail() rather than written out here, so the
+// address never sits in the source/bundle as a plain, scrapable string.
 const CONTACT_LINES = [
   "Akram Munir Awel",
   "London",
-  "akrammunirawel@gmail.com",
+  getEmail(),
   "linkedin.com/in/akrammunirawel/",
 ];
 
@@ -75,7 +81,14 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
 
     rafRef.current = requestAnimationFrame(() => {
       if (!isMountedRef.current) return;
-      el.style.transition = `transform ${DURATION}ms ${EASE}, border-radius ${DURATION}ms ease, opacity ${Math.round(DURATION * 0.6)}ms ease`;
+      // Firefox handles animated border-radius (esp. alongside box-shadow)
+      // noticeably worse than transform/opacity, which stay compositor-only.
+      // On Firefox we skip it from the transition list entirely below, so
+      // clearing el.style.borderRadius still lands on the frame's real
+      // 10px radius (from Mailpopup.css) — it just snaps there instantly
+      // on frame 1 instead of morphing smoothly over the full duration.
+      const radiusTransition = FIREFOX ? "" : `, border-radius ${DURATION}ms ease`;
+      el.style.transition = `transform ${DURATION}ms ${EASE}${radiusTransition}, opacity ${Math.round(DURATION * 0.6)}ms ease`;
       el.style.transform = "translate(-50%, -50%) scale(1, 1)";
       el.style.borderRadius = "";
       el.style.opacity = "1";
@@ -115,7 +128,9 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
       const translateX = originRect.left + originRect.width / 2 - (restRect.left + restRect.width / 2);
       const translateY = originRect.top + originRect.height / 2 - (restRect.top + restRect.height / 2);
 
-      el.style.transition = `transform ${closeDuration}ms ease, border-radius ${closeDuration}ms ease, opacity ${closeDuration}ms ease`;
+      el.style.transition = FIREFOX
+        ? `transform ${closeDuration}ms ease, opacity ${closeDuration}ms ease`
+        : `transform ${closeDuration}ms ease, border-radius ${closeDuration}ms ease, opacity ${closeDuration}ms ease`;
       el.style.transform = `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
       el.style.borderRadius = ORIGIN_RADIUS;
       el.style.opacity = "0";
@@ -142,7 +157,7 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
 
   const handleReply = () => {
     sound.play('select');
-    window.location.href = "mailto:akrammunirawel@gmail.com";
+    window.location.href = getMailtoHref();
   };
 
   const handleTrashClick = () => {

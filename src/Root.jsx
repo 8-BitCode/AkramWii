@@ -4,6 +4,12 @@ import WarningScreen from "./Warningscreen";
 import App from "./App";
 import "./Root.css";
 import sound from "./Soundmanager";
+import { isFirefox } from "./Env";
+
+// Computed once — Firefox is significantly more expensive at animating
+// `filter` (blur) and `border-radius`, so a couple of components below
+// take a cheaper path when this is true.
+const FIREFOX = isFirefox();
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -77,10 +83,19 @@ export default function Root() {
       const invisible = opacity <= 0;
       warningRef.current.style.opacity = String(opacity);
       if (!invisible) {
-        const blur = p * 8;
         const scale = 1 + p * 0.22;
         const translate = -p * 46;
-        warningRef.current.style.filter = `blur(${blur}px)`;
+        if (FIREFOX) {
+          // Animating `filter: blur()` every frame forces Firefox to fully
+          // re-rasterize the warning screen's text/SVG each tick — one of
+          // the most expensive things you can animate there. Opacity fading
+          // to 0 while it scales/moves away still reads as "dissolving",
+          // just without paying the blur repaint cost every frame.
+          warningRef.current.style.filter = "";
+        } else {
+          const blur = p * 8;
+          warningRef.current.style.filter = `blur(${blur}px)`;
+        }
         warningRef.current.style.transform = `translateY(${translate}px) scale(${scale})`;
         warningRef.current.style.display = "";
       } else if (warningRef.current.style.display !== "none") {
