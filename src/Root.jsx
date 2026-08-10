@@ -11,15 +11,19 @@ import { isFirefox } from "./Env";
 // take a cheaper path when this is true.
 const FIREFOX = isFirefox();
 
-// Computed once — touch/coarse-pointer devices (phones, tablets) take the
-// same cheap "no per-frame blur" path as Firefox. On iOS Safari especially,
-// rewriting `filter: blur()` every animation frame on a large element that
-// has `will-change: filter` can trigger a black flash during
-// re-rasterization. Since opacity/scale alone still reads as "dissolving",
-// it's not worth paying that cost (or risking the flash) on touch devices.
-const COARSE_POINTER =
-  typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
-const SKIP_BLUR = FIREFOX || COARSE_POINTER;
+// Touch/mobile devices are almost always WebKit (iOS Safari, and every
+// other iOS browser, which is required to use WebKit under the hood).
+// WebKit is just as expensive as Firefox at animating `filter: blur()` -
+// it forces a full re-rasterization of the warning screen's SVG/text on
+// every frame. On mobile GPUs that repaint can't keep up with the
+// scroll-driven rAF loop, frames get dropped, and because both the
+// warning screen and the stage behind it sit on solid #000, a dropped
+// frame reads as a visible flicker to black instead of a smooth reveal.
+// Route these devices through the same no-blur fade path as Firefox.
+const IS_TOUCH_DEVICE =
+  typeof window !== "undefined" &&
+  (window.matchMedia?.("(pointer: coarse)").matches || navigator.maxTouchPoints > 0);
+const SKIP_BLUR_ANIM = FIREFOX || IS_TOUCH_DEVICE;
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -56,11 +60,6 @@ export default function Root() {
   const settleTimerRef = React.useRef(null);
   const doneRef = React.useRef(false);
 
-  // Tracks whether the warning layer is currently hidden (display:none).
-  // Used to add hysteresis around the opacity-reaches-0 threshold so tiny
-  // scroll/touch jitter near that point can't rapidly flip display on/off.
-  const warningHiddenRef = React.useRef(false);
-
   const applyFrame = React.useCallback((p) => {
     const originX = 50;
     const originY = 90;
@@ -88,24 +87,6 @@ export default function Root() {
 
     if (warningRef.current) {
       const opacity = clamp(1 - p * 1.3, 0, 1);
-
-      // Hysteresis band around the point where opacity hits 0 (~p=0.769).
-      // Without this, a single hard "opacity <= 0" threshold means that on
-      // a slow scroll — where p can tremor back and forth by a fraction of
-      // a percent frame to frame due to touch-coordinate noise — the layer
-      // rapidly toggles display:none on and off, reading as a flicker even
-      // though the underlying transform/opacity values are smooth. Requiring
-      // p to cross a real gap (HIDE_AT vs SHOW_AT) before flipping state
-      // again means jitter smaller than that gap can't retrigger it.
-      const HIDE_AT = 0.79;
-      const SHOW_AT = 0.75;
-      if (!warningHiddenRef.current && p > HIDE_AT) {
-        warningHiddenRef.current = true;
-      } else if (warningHiddenRef.current && p < SHOW_AT) {
-        warningHiddenRef.current = false;
-      }
-      const invisible = warningHiddenRef.current;
-
       // Blurring the whole warning screen every frame is one of the more
       // expensive parts of this transition (filter repaints, unlike
       // opacity/transform which the compositor handles for free). Two
@@ -113,19 +94,18 @@ export default function Root() {
       // 16px once combined with opacity/scale), and stop touching the
       // element entirely once it's fully transparent instead of
       // continuing to recompute a growing blur nobody can see.
+      const invisible = opacity <= 0;
       warningRef.current.style.opacity = String(opacity);
       if (!invisible) {
         const scale = 1 + p * 0.22;
         const translate = -p * 46;
-        if (SKIP_BLUR) {
-          // Animating `filter: blur()` every frame forces Firefox (and,
-          // separately, iOS/mobile Safari) to fully re-rasterize the
-          // warning screen's text/SVG each tick — one of the most
-          // expensive things you can animate there, and on iOS Safari
-          // specifically has been observed to cause a black flash while
-          // the layer is re-rasterized mid-gesture. Opacity fading to 0
-          // while it scales/moves away still reads as "dissolving", just
-          // without paying that cost or risking the flash.
+        if (SKIP_BLUR_ANIM) {
+          // Animating `filter: blur()` every frame forces Firefox/WebKit to
+          // fully re-rasterize the warning screen's text/SVG each tick — one
+          // of the most expensive things you can animate there. Opacity
+          // fading to 0 while it scales/moves away still reads as
+          // "dissolving", just without paying the blur repaint cost every
+          // frame.
           warningRef.current.style.filter = "";
         } else {
           const blur = p * 8;
@@ -250,9 +230,6 @@ export default function Root() {
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const SCROLL_SENSITIVITY = 0.0016;
     const TOUCH_SENSITIVITY = 0.0048;
-    // Below this magnitude, a smoothed touch delta is treated as sensor
-    // noise rather than an intentional scroll and is ignored entirely.
-    const TOUCH_DEADZONE = 1.2; // px, measured on the smoothed delta
 
     const skipToEnd = () => {
       doneRef.current = true;
@@ -268,37 +245,21 @@ export default function Root() {
       targetRef.current = clamp(targetRef.current + e.deltaY * SCROLL_SENSITIVITY, 0, 1);
     };
 
-    let touchLastY = null;
-    // Low-pass filtered per-event delta. At slow scroll speeds, raw
-    // touchmove deltas from the touch sensor jitter by a few px in both
-    // directions frame to frame — using the raw value directly let that
-    // noise flip the *sign* of the delta, which briefly reversed
-    // targetRef and made the clip-path reveal circle visibly shrink and
-    // regrow (reads as the black backdrop "flashing in and out"). Smoothing
-    // the delta with an EMA means only a sustained motion in one direction
-    // can move it past the deadzone, so isolated noisy samples get
-    // absorbed instead of flipping the direction.
-    let smoothedDy = 0;
-
+    let touchStartY = null;
     const handleTouchStart = (e) => {
-      touchLastY = e.touches[0]?.clientY ?? null;
-      smoothedDy = 0;
+      touchStartY = e.touches[0]?.clientY ?? null;
     };
     const handleTouchMove = (e) => {
       e.preventDefault();
-      if (touchLastY === null) return;
-      const y = e.touches[0]?.clientY ?? touchLastY;
-      const rawDy = touchLastY - y;
-      touchLastY = y;
-
-      smoothedDy = lerp(smoothedDy, rawDy, 0.5);
-      if (Math.abs(smoothedDy) < TOUCH_DEADZONE) return;
-
+      if (touchStartY === null) return;
+      const y = e.touches[0]?.clientY ?? touchStartY;
+      const dy = touchStartY - y;
+      touchStartY = y;
       if (prefersReducedMotion) {
-        if (smoothedDy > 0) skipToEnd();
+        if (dy > 0) skipToEnd();
         return;
       }
-      targetRef.current = clamp(targetRef.current + smoothedDy * TOUCH_SENSITIVITY, 0, 1);
+      targetRef.current = clamp(targetRef.current + dy * TOUCH_SENSITIVITY, 0, 1);
     };
 
     const handleKeyDown = (e) => {
