@@ -46,6 +46,11 @@ export default function Root() {
   const settleTimerRef = React.useRef(null);
   const doneRef = React.useRef(false);
 
+  // Tracks whether the warning layer is currently hidden (display:none).
+  // Used to add hysteresis around the opacity-reaches-0 threshold so tiny
+  // scroll/touch jitter near that point can't rapidly flip display on/off.
+  const warningHiddenRef = React.useRef(false);
+
   const applyFrame = React.useCallback((p) => {
     const originX = 50;
     const originY = 90;
@@ -73,6 +78,24 @@ export default function Root() {
 
     if (warningRef.current) {
       const opacity = clamp(1 - p * 1.3, 0, 1);
+
+      // Hysteresis band around the point where opacity hits 0 (~p=0.769).
+      // Without this, a single hard "opacity <= 0" threshold means that on
+      // a slow scroll — where p can tremor back and forth by a fraction of
+      // a percent frame to frame due to touch-coordinate noise — the layer
+      // rapidly toggles display:none on and off, reading as a flicker even
+      // though the underlying transform/opacity values are smooth. Requiring
+      // p to cross a real gap (HIDE_AT vs SHOW_AT) before flipping state
+      // again means jitter smaller than that gap can't retrigger it.
+      const HIDE_AT = 0.79;
+      const SHOW_AT = 0.75;
+      if (!warningHiddenRef.current && p > HIDE_AT) {
+        warningHiddenRef.current = true;
+      } else if (warningHiddenRef.current && p < SHOW_AT) {
+        warningHiddenRef.current = false;
+      }
+      const invisible = warningHiddenRef.current;
+
       // Blurring the whole warning screen every frame is one of the more
       // expensive parts of this transition (filter repaints, unlike
       // opacity/transform which the compositor handles for free). Two
@@ -80,7 +103,6 @@ export default function Root() {
       // 16px once combined with opacity/scale), and stop touching the
       // element entirely once it's fully transparent instead of
       // continuing to recompute a growing blur nobody can see.
-      const invisible = opacity <= 0;
       warningRef.current.style.opacity = String(opacity);
       if (!invisible) {
         const scale = 1 + p * 0.22;
@@ -215,6 +237,10 @@ export default function Root() {
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const SCROLL_SENSITIVITY = 0.0016;
     const TOUCH_SENSITIVITY = 0.0048;
+    // Ignore sub-pixel finger jitter on touchmove so it doesn't get
+    // translated into tiny back-and-forth deltas that make `targetRef`
+    // (and everything downstream of it) tremor near thresholds.
+    const TOUCH_DEADZONE = 1.5; // px
 
     const skipToEnd = () => {
       doneRef.current = true;
@@ -239,6 +265,7 @@ export default function Root() {
       if (touchStartY === null) return;
       const y = e.touches[0]?.clientY ?? touchStartY;
       const dy = touchStartY - y;
+      if (Math.abs(dy) < TOUCH_DEADZONE) return;
       touchStartY = y;
       if (prefersReducedMotion) {
         if (dy > 0) skipToEnd();
