@@ -441,7 +441,7 @@ export default function AkramPage({ onGoBack, onEscape }) {
   // Nodes unlock strictly in order, bottom to top - each one becomes
   // tappable only once the node before it has been revealed. "core"
   // (the root, bottom-most node) starts revealed already.
-  const ORDER = ["core", "hackathon", "pass", "graphics", "employment"];
+  const ORDER = ["core", "hackathon", "pass", "graphics", "mis", "employment"];
   const isUnlockable = (id) => {
     const idx = ORDER.indexOf(id);
     if (idx <= 0) return true;
@@ -536,6 +536,22 @@ export default function AkramPage({ onGoBack, onEscape }) {
               onShakeStart={() => setScreenShaking(true)}
               onShakeEnd={() => setScreenShaking(false)}
               onCenter={scrollToNode}
+            />
+
+            <div className="akram-tree-gap" />
+
+            <TreeNode
+              id="mis"
+              revealed={revealedIds.has("mis")}
+              unlockable={isUnlockable("mis")}
+              onReveal={handleReveal}
+              onCenter={scrollToNode}
+              icon="💻"
+              tone="green"
+              title="Lead Web Developer, MIS"
+              meta="Manchester Society · 2026 – 2027"
+              text="I lead the web development for the Manchester Intelligence Society, taking their brief from a rough spec to a fully designed, working site, and managing its upkeep."
+              chips={["Web Development", "Team Lead"]}
             />
 
             <div className="akram-tree-gap" />

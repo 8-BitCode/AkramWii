@@ -444,6 +444,96 @@ body {
   max-height: 320px;
 }
 
+/* Thin long "Archive" plaque. The console bar's SVG path dips away in
+   the middle third to leave room for the clock — that dip is open,
+   transparent space (nothing painted there until the clock text starts
+   partway down), so the button sits there, well clear of the grid above
+   and the clock below, instead of spanning bar-wrap's full box (which
+   starts above where the grid actually ends and was clipping tiles). */
+.wii-archive-bar {
+  /* Vertically centered on the midpoint between the top of bar-wrap
+     (right where the tile grid ends) and .clock-time's anchor at
+     top:47% - rather than a fixed top:21%, which drifted off-center
+     once the button's own height/hover lift were factored in. Centering
+     on both axes via translate(-50%, -50%) means the same top:23.5%
+     value holds regardless of the clamp()'d height. */
+  position: absolute;
+  top: 17%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(52%, 340px);
+  height: clamp(26px, 3.8vh, 38px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: none;
+  appearance: none;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #e9edf1 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 2px 3px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    0 0 0 2px rgba(53, 195, 219, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wii-archive-bar:hover {
+  transform: translate(-50%, -50%) translateY(-1px) scale(1.02);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 2px 3px rgba(255, 255, 255, 0.95),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.24),
+    0 0 0 2.5px rgba(53, 195, 219, 0.75);
+}
+
+.wii-archive-bar:active {
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+.wii-archive-bar-icon {
+  width: clamp(12px, 1.6vmin, 15px);
+  height: clamp(12px, 1.6vmin, 15px);
+  flex-shrink: 0;
+  color: #1a8a9a;
+}
+
+.wii-archive-bar-label {
+  font-family: 'WiiBold', 'Segoe UI', sans-serif;
+  font-size: clamp(10px, 1.4vmin, 13px);
+  letter-spacing: 0.5px;
+  color: #4c4d51;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .wii-archive-bar {
+    width: min(70%, 260px);
+    top: 11%;
+  }
+}
+
+@media (max-width: 480px) {
+  .wii-archive-bar {
+    width: min(64%, 250px);
+    top: 8%;
+    padding: 0 12px;
+    gap: 5px;
+  }
+}
+
+@media (max-height: 500px) {
+  .wii-archive-bar {
+    top: 12%;
+    height: clamp(20px, 3.4vh, 28px);
+  }
+}
+
 .bar-svg {
   position: absolute;
   inset: 0;

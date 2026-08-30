@@ -4,6 +4,7 @@ import "./App.css";
 import DiscChannel from "./Discchannel";
 import MailPopup from "./Mailpopup";
 import SettingsPanel from "./Settingspanel";
+import ArchivePage from "./Archivepage";
 import aboutMeGif from "./Assets/Aboutmepreview.gif";
 import graphicsGif from "./Assets/Graphicspreviewtile.gif";
 import portfolioGif from "./Assets/Portfoliopreview.gif";
@@ -29,7 +30,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const INTERACTIVE_SELECTOR =
-  'button:not(:disabled), a, input[type="range"], [role="switch"], [role="button"], .wii-tile, .wii-orb, .disc-channel-arrow, .disc-channel-btn, .mail-popup-btn, .settings-toggle, .settings-segment, .settings-reset, .mail-popup-trash';
+  'button:not(:disabled), a, input[type="range"], [role="switch"], [role="button"], .wii-tile, .wii-orb, .wii-archive-bar, .archive-tile, .disc-channel-arrow, .disc-channel-btn, .mail-popup-btn, .settings-toggle, .settings-segment, .settings-reset, .mail-popup-trash';
 const HIT_AREA_EXPANSION = 35;
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -119,6 +120,9 @@ export default () => {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [settingsClosing, setSettingsClosing] = React.useState(false);
   const [settingsOriginRect, setSettingsOriginRect] = React.useState(null);
+  const [archiveOpen, setArchiveOpen] = React.useState(false);
+  const [archiveClosing, setArchiveClosing] = React.useState(false);
+  const [archiveOriginRect, setArchiveOriginRect] = React.useState(null);
   const [settings, setSettings] = React.useState(DEFAULT_SETTINGS);
   const cursorRef = React.useRef(null);
   const shiftPressedRef = React.useRef(false);
@@ -407,6 +411,22 @@ export default () => {
     setSettingsOriginRect(null);
   }, []);
 
+  const handleArchiveOpen = React.useCallback((e) => {
+    if (archiveOpen || archiveClosing) return;
+    sound.play('select');
+    const rect = e.currentTarget.getBoundingClientRect();
+    setArchiveOriginRect(rect);
+    setArchiveOpen(true);
+    setArchiveClosing(false);
+  }, [archiveOpen, archiveClosing]);
+
+  const handleArchiveClosed = React.useCallback(() => {
+    if (!isMountedRef.current) return;
+    setArchiveOpen(false);
+    setArchiveClosing(false);
+    setArchiveOriginRect(null);
+  }, []);
+
   const handleSettingChange = React.useCallback((key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -484,6 +504,20 @@ export default () => {
       </div>
 
       <div className="bar-wrap">
+        <button
+          className="wii-archive-bar"
+          type="button"
+          aria-label="Open Archive - older projects"
+          onClick={handleArchiveOpen}
+        >
+          <svg className="wii-archive-bar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+            <circle cx="12" cy="12" r="0.9" fill="currentColor" />
+          </svg>
+          <span className="wii-archive-bar-label">Archive</span>
+        </button>
+
         <svg
           className="bar-svg"
           viewBox="0 0 1000 220"
@@ -584,6 +618,15 @@ export default () => {
           onReset={handleSettingsReset}
           onRequestClose={() => setSettingsClosing(true)}
           onClosed={handleSettingsClosed}
+        />
+      )}
+
+      {archiveOpen && (
+        <ArchivePage
+          originRect={archiveOriginRect}
+          closing={archiveClosing}
+          onRequestClose={() => setArchiveClosing(true)}
+          onClosed={handleArchiveClosed}
         />
       )}
     </div>
