@@ -86,6 +86,13 @@ const ARCHIVE_PROJECTS = [
   },
 ];
 
+// How long the tile-cascade waits after the frame finishes its
+// pill -> full-screen morph before the first tile starts popping in,
+// and the stagger step between each subsequent tile.
+const REVEAL_DELAY = DURATION + 60;
+const REVEAL_STAGGER = 45;
+const REVEAL_STAGGER_CAP = 9; // don't let a long project list drag the cascade out forever
+
 export default function ArchivePage({ originRect, closing, onRequestClose, onClosed }) {
   const frameRef = React.useRef(null);
   const backdropRef = React.useRef(null);
@@ -97,6 +104,9 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
   const [selectedProject, setSelectedProject] = React.useState(null);
   const [popupClosing, setPopupClosing] = React.useState(false);
   const popupTimeoutRef = React.useRef(null);
+  const wireframeFieldRef = React.useRef(null);
+  const kickTimeoutsRef = React.useRef({});
+  const [kickedCube, setKickedCube] = React.useState(null);
 
   const closePopup = React.useCallback(() => {
     if (popupTimeoutRef.current) return;
@@ -112,13 +122,67 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
 
   React.useEffect(() => {
     isMountedRef.current = true;
-    const t = window.setTimeout(() => setShowSwoosh(false), DURATION + 200);
+    // The swoosh itself now waits until the frame morph has settled
+    // (REVEAL_DELAY) before it starts, and its own sweep animation runs
+    // 900ms - unmount it a little after that, not right when the frame
+    // opens, or it gets cut off mid-sweep.
+    const t = window.setTimeout(() => setShowSwoosh(false), REVEAL_DELAY + 950);
     return () => {
       isMountedRef.current = false;
       window.clearTimeout(t);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+    };
+  }, []);
+
+  // Drive the floating wireframe shapes' parallax tilt from pointer position.
+  // Written straight to the DOM via CSS vars (not React state) so the whole
+  // field can tilt at 60fps without re-rendering the tile grid underneath it.
+  React.useEffect(() => {
+    if (closing) return undefined;
+    const field = wireframeFieldRef.current;
+    if (!field) return undefined;
+    let raf = null;
+    let pendingX = 0;
+    let pendingY = 0;
+
+    const apply = () => {
+      raf = null;
+      field.style.setProperty("--wf-mx", pendingX.toFixed(3));
+      field.style.setProperty("--wf-my", pendingY.toFixed(3));
+    };
+
+    const handlePointerMove = (e) => {
+      const w = window.innerWidth || 1;
+      const h = window.innerHeight || 1;
+      pendingX = (e.clientX / w) * 2 - 1;
+      pendingY = (e.clientY / h) * 2 - 1;
+      if (raf === null) raf = requestAnimationFrame(apply);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
+  }, [closing]);
+
+  // A little squeeze-and-spin "kick" when a wireframe shape is clicked -
+  // pure eye candy, echoing the tile hover/press feedback elsewhere on
+  // this screen so the shapes feel like part of the same toy.
+  const handleWireframeKick = React.useCallback((id) => {
+    sound.play("select");
+    if (kickTimeoutsRef.current[id]) clearTimeout(kickTimeoutsRef.current[id]);
+    setKickedCube(id);
+    kickTimeoutsRef.current[id] = window.setTimeout(() => {
+      setKickedCube((current) => (current === id ? null : current));
+    }, 850);
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      Object.values(kickTimeoutsRef.current).forEach((t) => clearTimeout(t));
     };
   }, []);
 
@@ -272,7 +336,13 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
         onClick={() => !closing && onRequestClose?.()}
       />
       <div className="archive-frame" ref={frameRef} role="dialog" aria-label="Archive">
-        {showSwoosh && !closing && <div className="archive-swoosh" aria-hidden="true" />}
+        {showSwoosh && !closing && (
+          <div
+            className="archive-swoosh"
+            aria-hidden="true"
+            style={{ "--swoosh-delay": `${REVEAL_DELAY}ms` }}
+          />
+        )}
 
         <div className="archive-topband">
           <div className="archive-topband-row">
@@ -294,14 +364,86 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
           </div>
         </div>
 
-        <div className="archive-body">
+        <div className={`archive-body${closing ? " is-closing" : ""}`}>
+          <div className="archive-wireframe-field" ref={wireframeFieldRef} aria-hidden="true">
+            <svg className="archive-wf-orbit" viewBox="0 0 400 400" aria-hidden="true">
+              <ellipse cx="200" cy="200" rx="176" ry="62" />
+              <ellipse cx="200" cy="200" rx="176" ry="62" transform="rotate(60 200 200)" />
+              <ellipse cx="200" cy="200" rx="176" ry="62" transform="rotate(120 200 200)" />
+              <circle cx="200" cy="200" r="6" />
+            </svg>
+
+            <div className="wf-drift wf-drift--a">
+              <div className="wf-scene wf-scene--lg" style={{ "--wf-size": "116px" }}>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="wf-cube"
+                  onClick={() => handleWireframeKick("a")}
+                >
+                  <span className={`wf-cube-inner${kickedCube === "a" ? " is-kicked" : ""}`}>
+                    <span className="wf-face wf-face-front" />
+                    <span className="wf-face wf-face-back" />
+                    <span className="wf-face wf-face-right" />
+                    <span className="wf-face wf-face-left" />
+                    <span className="wf-face wf-face-top" />
+                    <span className="wf-face wf-face-bottom" />
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="wf-drift wf-drift--b">
+              <div className="wf-scene wf-scene--md" style={{ "--wf-size": "74px" }}>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="wf-cube"
+                  onClick={() => handleWireframeKick("b")}
+                >
+                  <span className={`wf-cube-inner wf-cube-inner--alt${kickedCube === "b" ? " is-kicked" : ""}`}>
+                    <span className="wf-face wf-face-front" />
+                    <span className="wf-face wf-face-back" />
+                    <span className="wf-face wf-face-right" />
+                    <span className="wf-face wf-face-left" />
+                    <span className="wf-face wf-face-top" />
+                    <span className="wf-face wf-face-bottom" />
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="wf-drift wf-drift--c">
+              <div className="wf-scene wf-scene--sm" style={{ "--wf-size": "46px" }}>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="wf-cube"
+                  onClick={() => handleWireframeKick("c")}
+                >
+                  <span className={`wf-cube-inner${kickedCube === "c" ? " is-kicked" : ""}`}>
+                    <span className="wf-face wf-face-front" />
+                    <span className="wf-face wf-face-back" />
+                    <span className="wf-face wf-face-right" />
+                    <span className="wf-face wf-face-left" />
+                    <span className="wf-face wf-face-top" />
+                    <span className="wf-face wf-face-bottom" />
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="archive-grid">
-            {ARCHIVE_PROJECTS.map((p) => (
+            {ARCHIVE_PROJECTS.map((p, i) => (
               <button
                 key={p.id}
                 type="button"
                 className="archive-tile"
                 onClick={() => handleTileClick(p)}
+                style={{
+                  "--tile-delay": `${REVEAL_DELAY + Math.min(i, REVEAL_STAGGER_CAP) * REVEAL_STAGGER}ms`,
+                }}
               >
                 <div className="archive-tile-icon">
                   <div className="archive-tile-icon-glaze" style={{ background: p.accent }}>

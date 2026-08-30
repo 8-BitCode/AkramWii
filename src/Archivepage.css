@@ -38,12 +38,15 @@
   background: linear-gradient(
     100deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.75) 45%,
-    rgba(53, 195, 219, 0.55) 55%,
+    rgba(255, 255, 255, 0.55) 50%,
     transparent 100%
   );
   transform: skewX(-18deg) translateX(0%);
-  animation: archive-swoosh-sweep 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  /* --swoosh-delay is set inline per-mount (see Archivepage.jsx) so the
+     sweep only starts once the frame has finished morphing to full
+     size, instead of firing while it's still scaling up and getting
+     visually warped along with it. */
+  animation: archive-swoosh-sweep 900ms cubic-bezier(0.22, 1, 0.36, 1) var(--swoosh-delay, 120ms) both;
 }
 
 @keyframes archive-swoosh-sweep {
@@ -75,7 +78,27 @@
   gap: 10px;
 }
 
+.archive-brand {
+  position: relative;
+}
+
+.archive-brand::before {
+  /* soft ambient glow behind the disc icon, echoing the wireframe
+     orbit's cyan so the top band and the panel below read as one
+     lit scene rather than two flat bars stacked together */
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  transform: translateY(-50%);
+  background: radial-gradient(circle, rgba(53, 195, 219, 0.35) 0%, rgba(53, 195, 219, 0) 70%);
+  pointer-events: none;
+}
+
 .archive-brand-disc {
+  position: relative;
   width: clamp(20px, 2.6vw, 28px);
   height: clamp(20px, 2.6vw, 28px);
   flex-shrink: 0;
@@ -153,7 +176,163 @@
   padding: clamp(20px, 3.4vh, 34px) clamp(12px, 2.5vw, 28px);
 }
 
+/* ---------- Floating wireframe shapes: ambient depth behind the grid,
+   echoing the Wii Menu's habit of giving flat panels a tilt-toward-you
+   feel, plus a nod to the disc channel's spinning ring. Purely
+   decorative (aria-hidden), but each cube still takes a click for a
+   little "kick" - like knocking a toy on a shelf. ---------- */
+.archive-wireframe-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  perspective: 1200px;
+  pointer-events: none;
+  --wf-mx: 0;
+  --wf-my: 0;
+}
+
+.archive-wf-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(58vw, 620px);
+  height: min(58vw, 620px);
+  transform: translate(-50%, -50%);
+  fill: none;
+  stroke: rgba(53, 195, 219, 0.16);
+  stroke-width: 1;
+  animation: archive-wf-orbit-spin 40s linear infinite;
+}
+
+.archive-wf-orbit circle {
+  fill: rgba(53, 195, 219, 0.16);
+  stroke: none;
+}
+
+@keyframes archive-wf-orbit-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.wf-drift {
+  position: absolute;
+  pointer-events: none;
+}
+
+.wf-drift--a { top: 8%; right: 9%; animation: archive-wf-bob 7.5s ease-in-out infinite; }
+.wf-drift--b { bottom: 12%; left: 7%; animation: archive-wf-bob 6.2s ease-in-out infinite 0.6s; }
+.wf-drift--c { top: 58%; right: 20%; animation: archive-wf-bob 5.4s ease-in-out infinite 1.1s; }
+
+@keyframes archive-wf-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-16px); }
+}
+
+.wf-scene {
+  width: var(--wf-size);
+  height: var(--wf-size);
+  perspective: 700px;
+  pointer-events: none;
+}
+
+/* .wf-cube: the button. Holds the pointer-driven tilt as a plain static
+   transform. .wf-cube-inner: a nested preserve-3d layer that owns the
+   continuous ambient rotation - kept separate so the tilt (a live calc()
+   value) and the spin (a keyframe animation) don't fight over the same
+   "transform" property on one element. */
+.wf-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  appearance: none;
+  display: block;
+  pointer-events: auto;
+  cursor: none !important;
+  transform-style: preserve-3d;
+  transform:
+    rotateX(calc(var(--wf-my, 0) * -14deg))
+    rotateY(calc(var(--wf-mx, 0) * 14deg));
+  transition: transform 0.5s ease-out, filter 0.2s ease;
+}
+
+.wf-cube-inner {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-style: preserve-3d;
+  animation: archive-wf-spin 16s linear infinite;
+}
+
+.wf-cube-inner--alt {
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+
+.wf-scene--sm .wf-cube-inner { animation-duration: 8s; }
+
+.wf-face {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgba(53, 195, 219, 0.55);
+  background: rgba(53, 195, 219, 0.035);
+  box-shadow: inset 0 0 14px rgba(53, 195, 219, 0.08);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wf-face-front  { transform: translateZ(calc(var(--wf-size) / 2)); }
+.wf-face-back   { transform: rotateY(180deg) translateZ(calc(var(--wf-size) / 2)); }
+.wf-face-right  { transform: rotateY(90deg) translateZ(calc(var(--wf-size) / 2)); }
+.wf-face-left   { transform: rotateY(-90deg) translateZ(calc(var(--wf-size) / 2)); }
+.wf-face-top    { transform: rotateX(90deg) translateZ(calc(var(--wf-size) / 2)); }
+.wf-face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--wf-size) / 2)); }
+
+/* The inner layer's own rotation tumbles the whole rigid assembly of
+   six statically-positioned faces - this is the only element whose
+   transform is driven by keyframes. */
+@keyframes archive-wf-spin {
+  from { transform: rotateX(0deg) rotateY(0deg); }
+  to   { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+.wf-cube:hover .wf-face,
+.wf-cube:focus-visible .wf-face {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 0 18px rgba(53, 195, 219, 0.35), 0 0 16px rgba(53, 195, 219, 0.5);
+}
+
+.wf-cube:hover {
+  filter: drop-shadow(0 0 10px rgba(53, 195, 219, 0.35));
+}
+
+.wf-cube-inner.is-kicked {
+  animation-duration: 550ms;
+  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  animation-iteration-count: 2;
+}
+
+@media (max-width: 760px) {
+  .wf-drift--c { display: none; }
+  .archive-wf-orbit { width: 80vw; height: 80vw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-wf-orbit,
+  .wf-drift,
+  .wf-cube-inner {
+    animation: none !important;
+  }
+  .wf-cube {
+    transition: none;
+  }
+}
+
 .archive-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   /* auto-fit (not auto-fill) collapses any extra, empty column tracks
      down to 0 and lets the real columns stretch via the 1fr to soak up
@@ -180,6 +359,14 @@
   padding: 0;
   appearance: none;
   font: inherit;
+  /* Cascade in like save files populating the list, rather than all
+     tiles simply being present the instant the frame is full size.
+     Lives on the outer button (not .archive-tile-icon) so it doesn't
+     fight with that element's hover/active transforms. --tile-delay is
+     set per-tile inline (see Archivepage.jsx) so each one pops in
+     slightly after the last. */
+  animation: archive-tile-in 480ms cubic-bezier(0.22, 1.12, 0.3, 1) both;
+  animation-delay: var(--tile-delay, 0ms);
 }
 
 .archive-tile-icon {
@@ -187,7 +374,10 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   max-width: 230px;
-  border-radius: 16% / 20%;
+  /* Sharp, tight corners like the real Data Management tiles - a small
+     fixed radius, not the soft blobby ellipse a %-based radius gives on
+     a square this size. */
+  border-radius: clamp(6px, 1.3vw, 11px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,15 +399,50 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+@keyframes archive-tile-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.86); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Quick fade/shrink on close so the tiles don't just vanish as a hard
+   block the instant the frame starts shrinking back into the bar. */
+.archive-body.is-closing .archive-tile {
+  animation: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  opacity: 0;
+  transform: translateY(6px) scale(0.92);
+}
+
 .archive-tile-icon-glaze {
   position: absolute;
   inset: 8%;
-  border-radius: 14% / 18%;
+  border-radius: clamp(4px, 0.9vw, 8px);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   opacity: 0.9;
+}
+
+/* Diagonal shine that sweeps across a tile on hover, like light catching
+   a save-file icon's glossy bezel as the pointer passes over it. */
+.archive-tile-icon-glaze::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%);
+  transform: skewX(-20deg) translateX(-140%);
+  opacity: 0;
+}
+
+.archive-tile:hover .archive-tile-icon-glaze::after,
+.archive-tile:focus-visible .archive-tile-icon-glaze::after {
+  opacity: 1;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: skewX(-20deg) translateX(340%);
 }
 
 .archive-tile-icon-img {
