@@ -375,13 +375,8 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
 
             <div className="wf-drift wf-drift--a">
               <div className="wf-scene wf-scene--lg" style={{ "--wf-size": "116px" }}>
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className="wf-cube"
-                  onClick={() => handleWireframeKick("a")}
-                >
-                  <span className={`wf-cube-inner${kickedCube === "a" ? " is-kicked" : ""}`}>
+                <div className="wf-cube">
+                  <span className="wf-cube-inner">
                     <span className="wf-face wf-face-front" />
                     <span className="wf-face wf-face-back" />
                     <span className="wf-face wf-face-right" />
@@ -389,19 +384,14 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
                     <span className="wf-face wf-face-top" />
                     <span className="wf-face wf-face-bottom" />
                   </span>
-                </button>
+                </div>
               </div>
             </div>
 
             <div className="wf-drift wf-drift--b">
               <div className="wf-scene wf-scene--md" style={{ "--wf-size": "74px" }}>
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className="wf-cube"
-                  onClick={() => handleWireframeKick("b")}
-                >
-                  <span className={`wf-cube-inner wf-cube-inner--alt${kickedCube === "b" ? " is-kicked" : ""}`}>
+                <div className="wf-cube">
+                  <span className="wf-cube-inner wf-cube-inner--alt">
                     <span className="wf-face wf-face-front" />
                     <span className="wf-face wf-face-back" />
                     <span className="wf-face wf-face-right" />
@@ -409,19 +399,14 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
                     <span className="wf-face wf-face-top" />
                     <span className="wf-face wf-face-bottom" />
                   </span>
-                </button>
+                </div>
               </div>
             </div>
 
             <div className="wf-drift wf-drift--c">
               <div className="wf-scene wf-scene--sm" style={{ "--wf-size": "46px" }}>
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className="wf-cube"
-                  onClick={() => handleWireframeKick("c")}
-                >
-                  <span className={`wf-cube-inner${kickedCube === "c" ? " is-kicked" : ""}`}>
+                <div className="wf-cube">
+                  <span className="wf-cube-inner">
                     <span className="wf-face wf-face-front" />
                     <span className="wf-face wf-face-back" />
                     <span className="wf-face wf-face-right" />
@@ -429,30 +414,67 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
                     <span className="wf-face wf-face-top" />
                     <span className="wf-face wf-face-bottom" />
                   </span>
-                </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="archive-grid">
-            {ARCHIVE_PROJECTS.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                className="archive-tile"
-                onClick={() => handleTileClick(p)}
-                style={{
-                  "--tile-delay": `${REVEAL_DELAY + Math.min(i, REVEAL_STAGGER_CAP) * REVEAL_STAGGER}ms`,
-                }}
-              >
-                <div className="archive-tile-icon">
-                  <div className="archive-tile-icon-glaze" style={{ background: p.accent }}>
-                    <img className="archive-tile-icon-img" src={p.icon} alt="" />
+          <div className="archive-content-container" style={{
+            position: "relative",
+            zIndex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: "100%",
+            maxWidth: "1520px",
+            margin: "0 auto",
+          }}>
+            <div style={{
+              width: "100%",
+              marginBottom: "28px",
+              background: "rgba(255, 255, 255, 0.75)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderRadius: "16px",
+              padding: "20px 24px",
+              border: "1px solid rgba(255, 255, 255, 0.85)",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.06)",
+              fontFamily: "WiiMedium, 'Segoe UI', sans-serif",
+              fontSize: "clamp(13px, 1.5vw, 14.5px)",
+              color: "#3a3b3f",
+              lineHeight: "1.6",
+            }}>
+              <h4 style={{
+                margin: "0 0 6px 0",
+                fontFamily: "WiiBold, 'Segoe UI', sans-serif",
+                fontSize: "15px",
+                color: "#23283a",
+              }}>
+                Developer Note
+              </h4>
+              Welcome to the archive! This page is deliberately set up to be experienced <em>after</em> you've already explored the rest of the main website. Why? Because I'm kinda lazy and didn't want to extensively redevelop the whole site every single time I finish a new big project, so I built this Wii-style data management drawer to just dump everything else into.
+            </div>
+
+            <div className="archive-grid" style={{ width: "100%", margin: 0 }}>
+              {ARCHIVE_PROJECTS.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="archive-tile"
+                  onClick={() => handleTileClick(p)}
+                  style={{
+                    "--tile-delay": `${REVEAL_DELAY + Math.min(i, REVEAL_STAGGER_CAP) * REVEAL_STAGGER}ms`,
+                  }}
+                >
+                  <div className="archive-tile-icon">
+                    <div className="archive-tile-icon-glaze" style={{ background: p.accent }}>
+                      <img className="archive-tile-icon-img" src={p.icon} alt="" />
+                    </div>
                   </div>
-                </div>
-                <span className="archive-tile-title">{p.title}</span>
-              </button>
-            ))}
+                  <span className="archive-tile-title">{p.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
