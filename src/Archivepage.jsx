@@ -452,7 +452,7 @@ export default function ArchivePage({ originRect, closing, onRequestClose, onClo
               }}>
                 Developer Note
               </h4>
-              Welcome to the archive! This page is deliberately set up to be experienced <em>after</em> you've already explored the rest of the main website. Why? Because I'm kinda lazy and didn't want to extensively redevelop the whole site every single time I finish a new big project, so I built this Wii-style data management drawer to just dump everything else into.
+              Welcome to the archive! This page is deliberately set up to be experienced <em>after</em> you've already explored the rest of the main website. Why? Because I'm kinda lazy and didn't want to extensively redevelop the whole site every single time I finish a new big (or small) project, so I built this little drawer to just dump everything else into.
             </div>
 
             <div className="archive-grid" style={{ width: "100%", margin: 0 }}>
