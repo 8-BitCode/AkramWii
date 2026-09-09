@@ -31,7 +31,7 @@ const ARCHIVE_PROJECTS = [
   {
     id: "mismcr",
     title: "MIS",
-    url: "https://mismcr.netlify.app/",
+    url: "https://manchesterintelligencesociety.com/",
     description: "I made this after being brought on as lead web developer for the Manchester Intelligence Society, built to their brief and requirements - though I still snuck in plenty of my own creative choices along the way.",
     icon: mismcrIcon,
     accent: "linear-gradient(155deg, #6fb1ff 0%, #3d7bd9 60%, #2a5aa8 100%)",
