@@ -20,6 +20,7 @@ const GRAPHICS_DATA = [
   { id: 10, title: "Imago Software Open Positions", ext: "png" },
   { id: 11, title: "Alton Towers Trip", ext: "png" },
   { id: 12, title: "HubSpot Speaker Event", ext: "mp4" },
+  { id: 13, title: "Manchester Intelligence Society Website Announcement", ext: "png" }
 ];
 
 const assetModules = import.meta.glob('/src/Assets/graphic*.{jpg,png,gif,mp4}', { eager: true });
