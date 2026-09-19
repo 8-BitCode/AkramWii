@@ -25,6 +25,55 @@ const CONTACT_LINES = [
 // filter/whitelist in a mail client.
 const FORM_SUBJECT = "AkramWii - New Message";
 
+// Walks through common mistakes in order, so the message tells the person
+// exactly what's wrong rather than a generic "invalid email" catch-all.
+function getEmailError(email) {
+  if (!email.includes("@")) {
+    return "That email is missing an @ symbol.";
+  }
+
+  const atCount = (email.match(/@/g) || []).length;
+  if (atCount > 1) {
+    return "That email has more than one @ symbol.";
+  }
+
+  const [localPart, domainPart] = email.split("@");
+
+  if (!localPart) {
+    return "That email is missing the part before the @ symbol.";
+  }
+
+  if (!domainPart) {
+    return "That email is missing a domain after the @ symbol.";
+  }
+
+  if (/\s/.test(email)) {
+    return "That email shouldn't contain any spaces.";
+  }
+
+  if (!domainPart.includes(".")) {
+    return "That email's domain is missing a dot, like .com or .co.uk.";
+  }
+
+  const domainSegments = domainPart.split(".");
+  const lastSegment = domainSegments[domainSegments.length - 1];
+  if (domainSegments.some((seg) => seg.length === 0)) {
+    return "That email's domain has an extra or misplaced dot.";
+  }
+
+  if (lastSegment.length < 2) {
+    return "That email's domain ending looks too short, e.g. .com or .io.";
+  }
+
+  // Final catch-all for anything else that still looks malformed
+  // (stray characters, etc.) after the specific checks above pass.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "That email address doesn't look quite right — mind double-checking it?";
+  }
+
+  return null;
+}
+
 export default function MailPopup({ originRect, closing, onRequestClose, onClosed }) {
   const frameRef = React.useRef(null);
   const backdropRef = React.useRef(null);
@@ -40,7 +89,8 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
     message: "",
     honey: "",
   });
-  const [formStatus, setFormStatus] = React.useState("idle"); // idle | sending | sent | error
+  const [formStatus, setFormStatus] = React.useState("idle"); // idle | sending | sent | error | invalidEmail
+  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -168,11 +218,6 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
     };
   }, [closing, originRect, onClosed]);
 
-  const handleReply = () => {
-    sound.play('select');
-    window.location.href = getMailtoHref();
-  };
-
   const handleTrashClick = () => {
     if (closing || shaking) return;
     sound.play('select');
@@ -184,8 +229,15 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
     setFormValues((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
+  const hasFormContent = () =>
+    formValues.name.trim() !== "" ||
+    formValues.email.trim() !== "" ||
+    formValues.message.trim() !== "";
+
+  // Shared submit logic, called from both the form's onSubmit and the
+  // Reply button (when the form has content) so there's a single source
+  // of truth for validation/sending rather than two divergent copies.
+  const submitForm = async () => {
     if (formStatus === "sending") return;
 
     // Honeypot: real users never see or fill this field (hidden via CSS).
@@ -198,6 +250,13 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
 
     if (!formValues.name.trim() || !formValues.email.trim() || !formValues.message.trim()) {
       setFormStatus("error");
+      return;
+    }
+
+    const emailError = getEmailError(formValues.email.trim());
+    if (emailError) {
+      setEmailErrorMessage(emailError);
+      setFormStatus("invalidEmail");
       return;
     }
 
@@ -224,6 +283,24 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
       setFormValues({ name: "", email: "", message: "", honey: "" });
     } catch {
       setFormStatus("error");
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    await submitForm();
+  };
+
+  // Reply button: if the person has typed anything into the form, treat
+  // it as "send this" instead of opening their mail client empty-handed.
+  // Only falls back to mailto: when the form is untouched.
+  const handleReply = async () => {
+    if (closing) return;
+    if (hasFormContent()) {
+      await submitForm();
+    } else {
+      sound.play('select');
+      window.location.href = getMailtoHref();
     }
   };
 
@@ -350,14 +427,11 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
                   Something went wrong — mind trying again, or emailing me directly below?
                 </div>
               )}
-
-              <button
-                type="submit"
-                className="mail-popup-send-btn"
-                disabled={formStatus === "sending"}
-              >
-                {formStatus === "sending" ? "Sending…" : "Send message"}
-              </button>
+              {formStatus === "invalidEmail" && (
+                <div className="mail-popup-form-status mail-popup-form-status--error">
+                  {emailErrorMessage}
+                </div>
+              )}
             </form>
           )}
         </div>
@@ -380,9 +454,13 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
             className="mail-popup-btn mail-popup-btn--reply"
             type="button"
             onClick={handleReply}
-            disabled={closing}
+            disabled={closing || formStatus === "sending"}
           >
-            Reply
+            {formStatus === "sending"
+              ? "Sending…"
+              : hasFormContent()
+              ? "Send"
+              : "Reply"}
           </button>
         </div>
       </div>
