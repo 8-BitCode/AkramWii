@@ -20,6 +20,11 @@ const CONTACT_LINES = [
   "linkedin.com/in/akrammunirawel/",
 ];
 
+// Fixed, never derived from user input — so every submission that comes
+// through always carries this exact subject line, making it trivial to
+// filter/whitelist in a mail client.
+const FORM_SUBJECT = "AkramWii - New Message";
+
 export default function MailPopup({ originRect, closing, onRequestClose, onClosed }) {
   const frameRef = React.useRef(null);
   const backdropRef = React.useRef(null);
@@ -28,6 +33,14 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
   const rafRef = React.useRef(null);
   const isMountedRef = React.useRef(true);
   const [shaking, setShaking] = React.useState(false);
+
+  const [formValues, setFormValues] = React.useState({
+    name: "",
+    email: "",
+    message: "",
+    honey: "",
+  });
+  const [formStatus, setFormStatus] = React.useState("idle"); // idle | sending | sent | error
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -167,6 +180,53 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
     window.setTimeout(() => setShaking(false), 420);
   };
 
+  const handleFieldChange = (field) => (e) => {
+    setFormValues((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (formStatus === "sending") return;
+
+    // Honeypot: real users never see or fill this field (hidden via CSS).
+    // Bots that blindly fill every input trip it, and we silently drop
+    // the submission without hitting FormSubmit or showing an error.
+    if (formValues.honey) {
+      setFormStatus("sent");
+      return;
+    }
+
+    if (!formValues.name.trim() || !formValues.email.trim() || !formValues.message.trim()) {
+      setFormStatus("error");
+      return;
+    }
+
+    setFormStatus("sending");
+    sound.play('select');
+
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${getEmail()}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name: formValues.name,
+          email: formValues.email,
+          message: formValues.message,
+          _subject: FORM_SUBJECT,
+          _template: "table",
+          _captcha: "false",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Request failed");
+
+      setFormStatus("sent");
+      setFormValues({ name: "", email: "", message: "", honey: "" });
+    } catch {
+      setFormStatus("error");
+    }
+  };
+
   // Helper to detect LinkedIn line
   const isLinkedInLine = (text) => text.includes("linkedin.com");
 
@@ -205,7 +265,7 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
           <span className="mail-popup-title">Akram</span>
         </div>
 
-        <div className="mail-popup-body">
+        <div className="mail-popup-body mail-popup-body--scroll">
           {CONTACT_LINES.map((line, i) => (
             <div className="mail-popup-line" key={i}>
               {isLinkedInLine(line) ? (
@@ -222,7 +282,84 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
               )}
             </div>
           ))}
-          <div className="mail-popup-line mail-popup-line--empty" />
+
+          <div className="mail-popup-divider">
+            <span>or drop me a note directly</span>
+          </div>
+
+          <p className="mail-popup-invite">
+            Want to give me a job? ( please please please ), or just want to say hi?
+            Whatever it is, feel free to reach out!! ↓.
+          </p>
+
+          {formStatus === "sent" ? (
+            <div className="mail-popup-form-status mail-popup-form-status--sent">
+              Message sent! I'll get back to you soon. 🎉
+            </div>
+          ) : (
+            <form className="mail-popup-form" onSubmit={handleFormSubmit}>
+              <input
+                type="text"
+                name="_honey"
+                value={formValues.honey}
+                onChange={handleFieldChange("honey")}
+                className="mail-popup-honey"
+                tabIndex="-1"
+                autoComplete="off"
+                aria-hidden="true"
+              />
+
+              <label className="mail-popup-field">
+                <span className="mail-popup-field-label">Name</span>
+                <input
+                  type="text"
+                  required
+                  value={formValues.name}
+                  onChange={handleFieldChange("name")}
+                  className="mail-popup-input"
+                  placeholder="Your name"
+                />
+              </label>
+
+              <label className="mail-popup-field">
+                <span className="mail-popup-field-label">Email</span>
+                <input
+                  type="email"
+                  required
+                  value={formValues.email}
+                  onChange={handleFieldChange("email")}
+                  className="mail-popup-input"
+                  placeholder="you@example.com"
+                />
+              </label>
+
+              <label className="mail-popup-field">
+                <span className="mail-popup-field-label">Message</span>
+                <textarea
+                  required
+                  value={formValues.message}
+                  onChange={handleFieldChange("message")}
+                  className="mail-popup-textarea"
+                  placeholder="What's on your mind?"
+                  rows={4}
+                />
+              </label>
+
+              {formStatus === "error" && (
+                <div className="mail-popup-form-status mail-popup-form-status--error">
+                  Something went wrong — mind trying again, or emailing me directly below?
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="mail-popup-send-btn"
+                disabled={formStatus === "sending"}
+              >
+                {formStatus === "sending" ? "Sending…" : "Send message"}
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="mail-popup-bottombar">
