@@ -1,13 +1,29 @@
+import { EmailMessage } from "cloudflare:email";
+
 const BASE_CSP =
   "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; frame-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; form-action 'self'; upgrade-insecure-requests";
 
 const GAME_CSP =
   "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' blob: data:; worker-src 'self' blob:; form-action 'self'";
 
-// Replace with the random token from FormSubmit's activation email
-// (or keep your email address until you have the token).
-const FORMSUBMIT_TARGET = "https://formsubmit.co/ajax/63d460e4db56c712ccc10eed885036f2";
-const SITE_ORIGIN = "https://akramawel.com";
+const ALLOWED_ORIGINS = ["https://akramawel.com", "https://www.akramawel.com"];
+
+/*
+  Sends mail with Cloudflare's built-in send_email binding (no third party).
+
+  Setup:
+    - Email Routing enabled on akramawel.com, with your inbox added and
+      verified as a destination address (Cloudflare dashboard).
+    - wrangler.jsonc has:  "send_email": [{ "name": "EMAIL" }]
+    - Secret:  npx wrangler secret put CONTACT_TO   (your verified inbox)
+  Optional:
+    - CONTACT_FROM var (defaults below). Must be an address on a domain
+      that has Email Routing enabled.
+    - CONTACT_LIMITER rate-limit binding (skipped if absent).
+*/
+
+const DEFAULT_FROM = "contact@akramawel.com";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -16,15 +32,56 @@ function json(data, status = 200) {
   });
 }
 
-async function handleContact(request) {
+// Strip CR/LF so user input can never inject extra headers.
+const oneLine = (v, max) => String(v).replace(/[\r\n]+/g, " ").trim().slice(0, max);
+
+function toBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+// Hand-built MIME so no npm package is needed. Body is base64 so any
+// characters / line lengths the visitor types are safe.
+function buildRawEmail({ from, to, replyTo, subject, text }) {
+  const domain = from.split("@")[1];
+  const body = toBase64(text).match(/.{1,76}/g)?.join("\r\n") ?? "";
+  return [
+    `From: Portfolio Contact <${from}>`,
+    `To: ${to}`,
+    `Reply-To: ${replyTo}`,
+    `Subject: ${subject}`,
+    `Date: ${new Date().toUTCString()}`,
+    `Message-ID: <${crypto.randomUUID()}@${domain}>`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    body,
+  ].join("\r\n");
+}
+
+async function handleContact(request, env) {
   if (request.method !== "POST") {
     return json({ success: false, message: "Method not allowed" }, 405);
   }
 
-  // Only accept submissions coming from your own site
+  // Browsers always send Origin on fetch POSTs, so require it.
   const origin = request.headers.get("Origin");
-  if (origin && origin !== SITE_ORIGIN && origin !== "https://www.akramawel.com") {
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
     return json({ success: false, message: "Forbidden" }, 403);
+  }
+
+  if (env.CONTACT_LIMITER) {
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const { success } = await env.CONTACT_LIMITER.limit({ key: ip });
+    if (!success) {
+      return json(
+        { success: false, message: "Too many messages. Please wait a minute and try again." },
+        429
+      );
+    }
   }
 
   let data;
@@ -38,6 +95,10 @@ async function handleContact(request) {
     return json({ success: false, message: "Invalid JSON" }, 400);
   }
 
+  if (!data || typeof data !== "object") {
+    return json({ success: false, message: "Invalid JSON" }, 400);
+  }
+
   // Honeypot: bots fill hidden fields, humans don't
   if (data._honey) {
     return json({ success: true });
@@ -47,32 +108,40 @@ async function handleContact(request) {
     return json({ success: false, message: "Missing fields" }, 400);
   }
 
+  const name = oneLine(data.name, 200);
+  const email = oneLine(data.email, 200);
+  const message = String(data.message).trim().slice(0, 5000);
+
+  if (!name || !message) {
+    return json({ success: false, message: "Missing fields" }, 400);
+  }
+  if (!EMAIL_RE.test(email)) {
+    return json({ success: false, message: "Invalid email address" }, 400);
+  }
+
+  if (!env.EMAIL || !env.CONTACT_TO) {
+    console.error("Contact form misconfigured: EMAIL binding or CONTACT_TO missing");
+    return json({ success: false, message: "Server misconfigured" }, 500);
+  }
+
   try {
-    const res = await fetch(FORMSUBMIT_TARGET, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Origin: SITE_ORIGIN,
-        Referer: SITE_ORIGIN + "/",
-      },
-      body: JSON.stringify({
-        name: String(data.name).slice(0, 200),
-        email: String(data.email).slice(0, 200),
-        message: String(data.message).slice(0, 5000),
-        _subject: "New message from akramawel.com",
-        _captcha: "false",
-        _template: "table",
-      }),
+    const from = env.CONTACT_FROM || DEFAULT_FROM;
+    const raw = buildRawEmail({
+      from,
+      to: env.CONTACT_TO,
+      replyTo: email,
+      subject: "New message from akramawel.com",
+      text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
     });
 
-    const text = await res.text();
-    return new Response(text, {
-      status: res.status,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch {
-    return json({ success: false, message: "Upstream error" }, 502);
+    await env.EMAIL.send(new EmailMessage(from, env.CONTACT_TO, raw));
+    return json({ success: true });
+  } catch (err) {
+    console.error("send_email failed", err);
+    return json(
+      { success: false, message: "Couldn't send your message. Please try again later." },
+      502
+    );
   }
 }
 
@@ -81,7 +150,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/contact") {
-      return handleContact(request);
+      return handleContact(request, env);
     }
 
     const response = await env.ASSETS.fetch(request);
