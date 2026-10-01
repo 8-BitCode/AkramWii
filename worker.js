@@ -6,7 +6,7 @@ const GAME_CSP =
 
 // Replace with the random token from FormSubmit's activation email
 // (or keep your email address until you have the token).
-const FORMSUBMIT_TARGET = "https://formsubmit.co/ajax/YOUR_RANDOM_TOKEN";
+const FORMSUBMIT_TARGET = "https://formsubmit.co/ajax/63d460e4db56c712ccc10eed885036f2";
 const SITE_ORIGIN = "https://akramawel.com";
 
 function json(data, status = 200) {

@@ -264,16 +264,14 @@ export default function MailPopup({ originRect, closing, onRequestClose, onClose
     sound.play('select');
 
     try {
-      const res = await fetch(`https://formsubmit.co/ajax/${getEmail()}`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           name: formValues.name,
           email: formValues.email,
           message: formValues.message,
-          _subject: FORM_SUBJECT,
-          _template: "table",
-          _captcha: "false",
+          _honey: formValues.honey || "",
         }),
       });
 
