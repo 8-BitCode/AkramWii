@@ -441,7 +441,7 @@ export default function AkramPage({ onGoBack, onEscape }) {
   // Nodes unlock strictly in order, bottom to top - each one becomes
   // tappable only once the node before it has been revealed. "core"
   // (the root, bottom-most node) starts revealed already.
-  const ORDER = ["core", "hackathon", "pass", "graphics", "mis", "employment"];
+  const ORDER = ["core", "hackathon", "pass", "graphics", "mis", "greatunihack", "employment"];
   const isUnlockable = (id) => {
     const idx = ORDER.indexOf(id);
     if (idx <= 0) return true;
@@ -536,6 +536,22 @@ export default function AkramPage({ onGoBack, onEscape }) {
               onShakeStart={() => setScreenShaking(true)}
               onShakeEnd={() => setScreenShaking(false)}
               onCenter={scrollToNode}
+            />
+
+            <div className="akram-tree-gap" />
+
+            <TreeNode
+              id="greatunihack"
+              revealed={revealedIds.has("greatunihack")}
+              unlockable={isUnlockable("greatunihack")}
+              onReveal={handleReveal}
+              onCenter={scrollToNode}
+              icon="🔥"
+              tone="green"
+              title="GreatUniHack 2026 — Campfire"
+              pill="🥇 1st Place, Tether Track"
+              text="We built Campfire, a friend-making app where you meet people as PS1-style avatars. The AI runs on your phone, the network is your friends' phones, and there are no servers."
+              chips={["React Native", "On-device AI", "P2P"]}
             />
 
             <div className="akram-tree-gap" />
